@@ -1,6 +1,7 @@
 package com.example.smt_bunny;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -40,6 +41,8 @@ public class CanvasView extends View  {
     public Paint mPaint;
     public static Canvas mCanvas;
 
+    private GameState bunnyGame;
+
     float left=100;
     float top = 700;
     float right = left+20;
@@ -59,17 +62,18 @@ public class CanvasView extends View  {
     public static Line line_accel3 = new Line(yAxisValues_accel3);
     public static LineChartData data_accel = new LineChartData();
 
-    private float bunnyOffsetX;
-    private float bunnyOffsetY;
+    private float carrotOffsetX;
+    private float carrotOffsetY;
 
-    private boolean bunnyMove = false;
+    private boolean carrotMove = false;
 
     //private RectF oval1 = new RectF(100,400,150,420);
 
 
-    public CanvasView(Context context) {
+    public CanvasView(Context context, GameState bunnyGame) {
         super(context);
         mPaint = new Paint();
+        this.bunnyGame = bunnyGame;
     }
 
 
@@ -93,21 +97,23 @@ public class CanvasView extends View  {
     }
 
     public boolean onTouchEvent(MotionEvent event){
+        int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
+        int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
 
         switch(event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 quit_click_count = 0;
                 closeAppBtn.setTextColor(Color.TRANSPARENT);
 
-                bunnyOffsetX = event.getRawX() - bunny.getX();
-                bunnyOffsetY = event.getRawY() - bunny.getY();
-//                Log.w("thing",String.valueOf(bunnyOffsetX));
+                carrotOffsetX = event.getRawX() - carrot.getX();
+                carrotOffsetY = event.getRawY() - carrot.getY();
+//                Log.w("thing",String.valueOf(carrotOffsetX));
 //                Log.w("width",String.valueOf(bunny.getWidth()));
-                bunnyMove = bunnyOffsetX >=0 & bunnyOffsetX <= bunny.getWidth() & bunnyOffsetY >=0 & bunnyOffsetY <= bunny.getHeight();
+                carrotMove = carrotOffsetX >=0 & carrotOffsetX <= carrot.getWidth() & carrotOffsetY >=0 & carrotOffsetY <= carrot.getHeight();
 
                 right = left+event.getTouchMajor();
                 bottom = top+event.getTouchMinor();
-                invalidate();
+                carrot.invalidate();
 
                 yAxisValues.add(new PointValue(1,1));
                 line.setHasPoints(false);
@@ -134,9 +140,9 @@ public class CanvasView extends View  {
 
             case MotionEvent.ACTION_MOVE:
 
-                if(bunnyMove){
-                    bunny.setX(event.getRawX()-bunnyOffsetX);
-                    bunny.setY(event.getRawY()-bunnyOffsetY);
+                if(carrotMove){
+                    carrot.setX(event.getRawX()-carrotOffsetX);
+                    carrot.setY(event.getRawY()-carrotOffsetY);
                 }
 
                 right = left+event.getTouchMajor()*10;
@@ -150,21 +156,35 @@ public class CanvasView extends View  {
                 yAxisValues_accel2.add(new PointValue(yAxisValues_accel2.size(), accelValues2*10));
                 yAxisValues_accel3.add(new PointValue(yAxisValues_accel3.size(), (float) ((accelValues3-9.86)*10)));
                 accelChart1.setLineChartData(data_accel);
-                invalidate();
+                carrot.invalidate();
                 break;
 
             case MotionEvent.ACTION_UP:
-                float bunny_center_x = bunny.getX()+(bunny.getWidth()/2);
-                float bunny_center_y = bunny.getY()+(bunny.getHeight()/2);
+                if(carrot.getX() < 0){
+                    carrot.setX(0); //Carrot is too far left, bring back
+                } else if (carrot.getX() + carrot.getWidth() > screenWidth){
+                    carrot.setX(screenWidth - carrot.getWidth()); //too far right, bring back
+                }
+                if(carrot.getY() < 0){
+                    carrot.setY(0); //Carrot is too far up, bring back
+                } else if (carrot.getY() + carrot.getHeight() > screenHeight){
+                    carrot.setY(screenHeight - carrot.getHeight()); //too far down, bring back
+                }
+
                 float carrot_center_x = carrot.getX()+(carrot.getWidth()/2);
                 float carrot_center_y = carrot.getY()+(carrot.getHeight()/2);
-                boolean x_overlap = Math.abs(bunny_center_x - carrot_center_x) <= (bunny.getWidth()/2+carrot.getWidth()/2)*.5;
-                boolean y_overlap = Math.abs(bunny_center_y - carrot_center_y) <= (bunny.getHeight()/2+carrot.getHeight()/2)*.5;
+                float bunny_center_x = bunny.getX()+(bunny.getWidth()/2);
+                float bunny_center_y = bunny.getY()+(bunny.getHeight()/2);
+                boolean x_overlap = Math.abs(carrot_center_x - bunny_center_x) <= (bunny.getWidth()/2+carrot.getWidth()/2)*.5;
+                boolean y_overlap = Math.abs(carrot_center_y - bunny_center_y) <= (bunny.getHeight()/2+carrot.getHeight()/2)*.5;
 
-                if( x_overlap & y_overlap){startTrial();}
+                if( x_overlap & y_overlap){
+                    bunnyGame.incrementTrial();
+                    bunnyGame.nextTrial();
+                }
                 right = left+20;
                 bottom = top+20;
-                invalidate();
+                carrot.invalidate();
                 break;
         }
         saveSamples(event);

@@ -1,0 +1,11 @@
+<animation-list xmlns:android="http://schemas.android.com/apk/res/android"
+    android:oneshot="false">
+    <item android:drawable="@drawable/bunny_cheer_1" android:duration="100" />
+    <item android:drawable="@drawable/bunny_cheer_2" android:duration="100" />
+    <item android:drawable="@drawable/bunny_cheer_3" android:duration="100" />
+    <item android:drawable="@drawable/bunny_cheer_4" android:duration="100" />
+    <item android:drawable="@drawable/bunny_cheer_5" android:duration="100" />
+    <item android:drawable="@drawable/bunny_cheer_4" android:duration="100" />
+    <item android:drawable="@drawable/bunny_cheer_3" android:duration="100" />
+    <item android:drawable="@drawable/bunny_cheer_2" android:duration="100" />
+</animation-list>

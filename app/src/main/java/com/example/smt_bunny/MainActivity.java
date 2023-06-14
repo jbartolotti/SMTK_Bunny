@@ -3,16 +3,14 @@ package com.example.smt_bunny;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.res.ResourcesCompat;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Path;
+import android.graphics.drawable.AnimationDrawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -22,8 +20,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.StrictMode;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -36,22 +32,14 @@ import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 import java.util.Random;
-import java.util.logging.Logger;
 
-import au.com.bytecode.opencsv.CSVWriter;
-import lecho.lib.hellocharts.model.AxisValue;
 import lecho.lib.hellocharts.model.Line;
 import lecho.lib.hellocharts.model.LineChartData;
 import lecho.lib.hellocharts.model.PointValue;
@@ -124,14 +112,35 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     //GAME ELEMENTS
     private ImageView bg_grass;
+    public static ImageView bunny_brown;
+    public static ImageView bunny_white;
     public static ImageView bunny;
+    public static ImageView carrot_default;
     public static ImageView carrot;
-//    public static Path dirt;
+    public ImageView bunnyCheer;
+    public AnimationDrawable bunnyCheerAnim;
+    public ImageView bunnyCheer1;
+    public AnimationDrawable bunnyCheerAnim1;
+    public ImageView bunnyCheer2;
+    public AnimationDrawable bunnyCheerAnim2;
+    public ImageView bunnyCheer3;
+    public AnimationDrawable bunnyCheerAnim3;
+    public ImageView bunnyCheer4;
+    public AnimationDrawable bunnyCheerAnim4;
+    public ImageView bunnyCheer5;
+    public AnimationDrawable bunnyCheerAnim5;
+
+
+
+    //    public static Path dirt;
     public static ImageView path_000;
     public static ImageView path_300;
     public static ImageView path_600;
     public static ImageView path_900;
     public static ImageView current_path;
+
+    public static ImageView path_1600_300;
+    public static ImageView curve_1600_300;
 
     //GAME VARS
     private int xDelta;
@@ -160,7 +169,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mConstraintLayout = findViewById(R.id.constraintLayout);
-        final CanvasView mCanvasView = new CanvasView(this);
+        final GameState bunnyGame = new GameState();
+        final CanvasView mCanvasView = new CanvasView(this, bunnyGame);
 
 
 
@@ -193,16 +203,37 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         touchChart.setVisibility(View.INVISIBLE);
         accelChart1.setVisibility(View.INVISIBLE);
 
+
         //GAME ELEMENTS
         bg_grass = findViewById(R.id.bg_grass);
-        bunny = findViewById(R.id.bunny);
-        carrot = findViewById(R.id.carrot);
+        bunny_white = findViewById(R.id.bunny_white);
+        bunny_brown = findViewById(R.id.bunny_brown);
+        carrot_default = findViewById(R.id.carrot_default);
         path_000 = findViewById(R.id.path_000);
         path_300 = findViewById(R.id.path_300);
         path_600 = findViewById(R.id.path_600);
         path_900 = findViewById(R.id.path_900);
+        path_1600_300 = findViewById(R.id.path_1600_300);
+        curve_1600_300 = findViewById(R.id.curve_1600_300);
 
-        current_path = path_000;
+//        bunnyCheer  = findViewById(R.id.bunnyCheerSingle);
+//        bunnyCheerAnim = (AnimationDrawable) bunnyCheer.getDrawable();
+//        bunnyCheerAnim.start();
+        bunnyCheer1  = findViewById(R.id.bunnyCheer1);
+        bunnyCheerAnim1 = (AnimationDrawable) bunnyCheer1.getDrawable();
+        bunnyCheer2  = findViewById(R.id.bunnyCheer2);
+        bunnyCheerAnim2 = (AnimationDrawable) bunnyCheer2.getDrawable();
+        bunnyCheer3  = findViewById(R.id.bunnyCheer3);
+        bunnyCheerAnim3 = (AnimationDrawable) bunnyCheer3.getDrawable();
+        bunnyCheer4  = findViewById(R.id.bunnyCheer4);
+        bunnyCheerAnim4 = (AnimationDrawable) bunnyCheer4.getDrawable();
+        bunnyCheer5  = findViewById(R.id.bunnyCheer5);
+        bunnyCheerAnim5 = (AnimationDrawable) bunnyCheer5.getDrawable();
+
+
+        bunny = bunny_brown;
+        carrot = carrot_default;
+        current_path = path_1600_300;
         int dirt_pattern_id = getResources().getIdentifier("dirt4.png","drawable","com.example.smt_bunny");
         Bitmap dirt_pattern_bitmap = BitmapFactory.decodeResource(getResources(), dirt_pattern_id);
 //        bunny.setOnTouchListener(new View.OnTouchListener() {
@@ -237,6 +268,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         //Starting display
         viewHideAll();
         viewMenu("show");
+        viewInterBlock("show");
         startBtn.setVisibility(View.INVISIBLE);
         pathEnableToggle.setVisibility(View.INVISIBLE);
 
@@ -264,7 +296,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 viewHideAll();
                 if(debug_enable){debugToggle.setVisibility(View.VISIBLE);}
                 viewGame("show");
-                startTrial();
+                //startTrial();
+                bunnyGame.nextTrial();
 
             }
         });
@@ -463,12 +496,54 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         inputID.setVisibility(vis);
         debugEnableToggle.setVisibility(vis);
         pathEnableToggle.setVisibility(vis);
+
     }
+
+    private void viewInterBlock(String showhide) {
+        int vis = View.VISIBLE;
+        if (showhide.equals("hide")){
+            vis = View.INVISIBLE;
+        }
+        bg_grass.setVisibility(vis);
+        viewBunnyCheerFive(showhide);
+    }
+
+    private void viewBunnyCheerFive(String showhide){
+        int vis = View.VISIBLE;
+        if (showhide.equals("hide")){
+            vis = View.INVISIBLE;
+        }
+        bunnyCheer1.setVisibility(vis);
+        bunnyCheer2.setVisibility(vis);
+        bunnyCheer3.setVisibility(vis);
+        bunnyCheer4.setVisibility(vis);
+        bunnyCheer5.setVisibility(vis);
+        switch (vis) {
+            case View.VISIBLE:
+                bunnyCheerAnim1.start();
+                bunnyCheerAnim2.start();
+                bunnyCheerAnim3.start();
+                bunnyCheerAnim4.start();
+                bunnyCheerAnim5.start();
+                break;
+            case View.INVISIBLE:
+                bunnyCheerAnim1.stop();
+                bunnyCheerAnim2.stop();
+                bunnyCheerAnim3.stop();
+                bunnyCheerAnim4.stop();
+                bunnyCheerAnim5.stop();
+                break;
+        }
+
+    }
+
+
 
     private void viewHideAll() {
         viewDebug("hide");
         viewMenu("hide");
         viewGame("hide");
+        viewInterBlock("hide");
     }
 
 
@@ -481,30 +556,57 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     //GAMEPLAY FUNCTIONS
-    public static void startTrial() {
+
+    public void startInterBlock(){
+        viewHideAll();
+        viewInterBlock("show");
+    }
+
+    public static void startTrial(int trialNumber, String pathType) {
         int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
         int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
 
-        bunny.setX(0);
-        carrot.setX(screenWidth - carrot.getWidth());
 
-        //Pick a random number from (0-9)*100 and use that for bunny_Y.
-        //carrot is constrained. It can be 0, 300, 600, or 900 offset from bunny.
-        //dist_down is 900 - bunny_y. dist_up is bunny_y. Max dist is
-        //int dist_max = max(bunny.getY(), 900-bunny.getY())
+
+
+        bunny.setX(screenWidth - bunny.getWidth());
+        carrot.setX(0);
+
+        //Pick a random number from (0-9)*100 and use that for carrot_Y.
+        //bunny is constrained, locked to N offset from carrot, up or down. TEMP locked to 300.
+        //If carrot is bottom half or middle, bunny higher. otherwise bunny lower.
+        //dist_down is 900 - carrot_y. dist_up is carrot_y. Max dist is
+        //int dist_max = max(carrot.getY(), 900-carrot.getY())
         //just use some conditionals.
         //if dist_max == 900 then do the 900 one automatically because otherwise it'll be too rare.
 
-        int bunny_pick = r.nextInt(10)*100; //this will get random 0-9 and multiply 100
-        bunny.setY(bunny_pick);
-        int dist_down = 900 - bunny_pick;
-        int dist_up = bunny_pick;
+        int carrot_pick = r.nextInt(10)*100; //this will get random 0-9 and multiply 100
+        carrot.setY(carrot_pick);
+        int dist_down = 900 - carrot_pick;
+        int dist_up = carrot_pick;
         int dist_max = Math.max(dist_down, dist_up);
         int path_type;
         String path_name = "";
         current_path.setVisibility(View.INVISIBLE);
 
-        switch (bunny_pick) {
+        current_path = path_1600_300;
+        if( carrot_pick <= 600) { //carrot in bottom half, so make it slope up (i.e., default pic)
+            current_path.setScaleY(-1f);
+            path_name = "300_up";
+            bunny.setY(carrot.getY() + 300);
+            current_path.setY(carrot.getY());
+        } else {
+            current_path.setScaleY(1f);
+            path_name = "300_down";
+            bunny.setY(carrot.getY() - 300);
+            current_path.setY(carrot.getY()-300);
+
+
+        }
+
+        //Removed different path selections, offset will be constant
+        /*
+        switch (carrot_pick) {
 
             case 0:
                 path_type = r.nextInt(4); //0,3,6,9
@@ -725,6 +827,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 break;
 
         }
+        */
 
         if(!path_enable){
             path_name = "NONE";
@@ -743,8 +846,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
             public void run() {
-                String dat = "START, " + (bunny.getX() + bunny.getWidth() / 2) + ", " + (bunny.getY() + bunny.getHeight() / 2) + ", " + bunny.getWidth() + ", " + bunny.getHeight() + ", " +
-                        (carrot.getX() + carrot.getWidth() / 2) + ", " + (carrot.getY() + carrot.getHeight() / 2) + ", " + carrot.getWidth() + ", " + carrot.getHeight() + ", " + finalPath_name;
+                String dat = "START, " + (carrot.getX() + carrot.getWidth() / 2) + ", " + (carrot.getY() + carrot.getHeight() / 2) + ", " + carrot.getWidth() + ", " + carrot.getHeight() + ", " +
+                        (bunny.getX() + bunny.getWidth() / 2) + ", " + (bunny.getY() + bunny.getHeight() / 2) + ", " + bunny.getWidth() + ", " + bunny.getHeight() + ", " + finalPath_name;
                 WriteDatToFile(File_Event, dat);
                 bunny.setVisibility((View.VISIBLE));
                 carrot.setVisibility(View.VISIBLE);
@@ -754,7 +857,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
-    private View.OnTouchListener bunnyTouch() {
+    private View.OnTouchListener carrotTouch() {
         return new View.OnTouchListener() {
 
             @SuppressLint("ClickableViewAccessibility")
@@ -898,3 +1001,4 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         WriteToFile(WriteFile, uptimeMillis() + ", " + data + "\n");
     }
 }
+
