@@ -1,0 +1,11 @@
+<resources>
+
+    <style name="Theme.AppCompat.Light.NoActionBar.FullScreen.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="Theme.AppCompat.Light.NoActionBar.FullScreen.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="Theme.AppCompat.Light.NoActionBar.FullScreen.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+</resources>
