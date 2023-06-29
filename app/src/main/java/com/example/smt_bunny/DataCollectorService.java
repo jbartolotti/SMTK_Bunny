@@ -87,9 +87,14 @@ public class DataCollectorService extends IntentService {
                 float accelValues2 = event.values[1];
                 float accelValues3 = event.values[2];
                 // Format the data as a string
-                String dat = String.valueOf(accelValues1) + ", " + String.valueOf(accelValues2) + ", " + String.valueOf(accelValues3);
+                StringBuilder dat = new StringBuilder();
+                dat.append(String.valueOf(accelValues1)).append(", ")
+                        .append(String.valueOf(accelValues2)).append(", ")
+                        .append(String.valueOf(accelValues3));
+
+                //String dat = String.valueOf(accelValues1) + ", " + String.valueOf(accelValues2) + ", " + String.valueOf(accelValues3);
                 // Write the data to the file
-                WriteDatToFile(File_Accel, dat);
+                WriteDatToFile(File_Accel, dat.toString());
             }
 
             @Override

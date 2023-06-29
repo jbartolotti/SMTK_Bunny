@@ -1,6 +1,7 @@
 package com.example.smt_bunny;
 
 import static android.os.SystemClock.uptimeMillis;
+import static com.example.smt_bunny.R.id.bunnyCheerSingle;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.lang.Math.floor;
@@ -21,6 +22,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -52,6 +54,7 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
     private BufferedOutputStream bos;
 
     private Button beginButton;
+    private Button nextBlockButton;
 
     // Define some fields for your views and widgets
     //private CanvasView canvasView;
@@ -70,8 +73,12 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
     private boolean carrotMove = false;
     private float carrotOffsetX;
     private float carrotOffsetY;
-    private HashMap<Integer, Integer> pointerLabels; //the hashmap to store the mapping between pointer IDs and labels
+    private SparseArray<Integer> pointerLabels;
+    private SparseArray<Integer> pointerLabelsCarrot;
+    //private HashMap<Integer, Integer> pointerLabels; //the hashmap to store the mapping between pointer IDs and labels
     private int currentLabel; //the current label value
+    private int currentLabelCarrot; //the current label value for the carrot touches
+
 
     // Game Elements
     private ImageView bg_grass;
@@ -81,6 +88,7 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
     private ImageView bunny;
     private ImageView carrot_default;
     private ImageView carrot;
+
     public ImageView bunnyCheer;
     public AnimationDrawable bunnyCheerAnim;
     public ImageView bunnyCheer1;
@@ -93,6 +101,7 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
     public AnimationDrawable bunnyCheerAnim4;
     public ImageView bunnyCheer5;
     public AnimationDrawable bunnyCheerAnim5;
+
     private ImageView path_straight_1600;
     private ImageView path_curved_1600;
     private ImageView path_image;
@@ -118,9 +127,14 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         bunny_white = findViewById(R.id.bunny_white);
         bunny_brown = findViewById(R.id.bunny_brown);
         carrot_default = findViewById(R.id.carrot_default);
-       // guide_curve_toright = findViewById(R.id.);
+        guide_curve_toright = findViewById(R.id.guide_curve_toright);
         beginButton = findViewById(R.id.beginButton);
-/*
+        nextBlockButton = findViewById(R.id.nextBlockButton);
+        guide = guide_curve_toright;
+
+ //   bunnyCheer  = findViewById(R.id.bunnyCheerSingle);
+ //   bunnyCheerAnim = (AnimationDrawable) bunnyCheer.getDrawable();
+
     bunnyCheer1  = findViewById(R.id.bunnyCheer1);
     bunnyCheerAnim1 = (AnimationDrawable) bunnyCheer1.getDrawable();
     bunnyCheer2  = findViewById(R.id.bunnyCheer2);
@@ -131,7 +145,7 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
     bunnyCheerAnim4 = (AnimationDrawable) bunnyCheer4.getDrawable();
     bunnyCheer5  = findViewById(R.id.bunnyCheer5);
     bunnyCheerAnim5 = (AnimationDrawable) bunnyCheer5.getDrawable();
-*/
+
         path_straight_1600 = findViewById(R.id.path_straight_1600);
         path_curved_1600 = findViewById(R.id.path_curved_1600);
 
@@ -143,6 +157,7 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         carrot.setOnTouchListener(this);
 
         bg.setOnTouchListener(new View.OnTouchListener() {
+            @RequiresApi(api = Build.VERSION_CODES.Q)
             @SuppressLint("ClickableViewAccessibility")
             @Override
             public boolean onTouch (View v, MotionEvent event) {
@@ -154,42 +169,61 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
                     case MotionEvent.ACTION_DOWN: //the first pointer goes down
                     case MotionEvent.ACTION_POINTER_DOWN: //a subsequent pointer goes down
                         pointerLabels.put (pointerId, currentLabel); //put the mapping between pointer ID and label in the hashmap
-                        Log.d ("BG", "Pointer " + currentLabel + " down at (" + event.getX (pointerIndex) + ", " + event.getY (pointerIndex) + ")"); //log the label and position of the pointer
+                      //  Log.d ("BG", "Pointer " + currentLabel + " down at (" + event.getX (pointerIndex) + ", " + event.getY (pointerIndex) + ")"); //log the label and position of the pointer
                         currentLabel++; //increment the current label value
                         break;
                     case MotionEvent.ACTION_MOVE: //a pointer moves
-                        for (int i = 0; i < event.getPointerCount (); i++) { //loop through all pointers
-                            pointerId = event.getPointerId (i); //get the ID of each pointer
-                            int label = pointerLabels.get (pointerId); //get the label of each pointer from the hashmap
-                            Log.d ("BG", "Pointer " + label + " move at (" + event.getX (i) + ", " + event.getY (i) + ")"); //log the label and position of each pointer
-                        }
+                        //for (int i = 0; i < event.getPointerCount (); i++) { //loop through all pointers
+                         //   pointerId = event.getPointerId (i); //get the ID of each pointer
+                         //   int label = pointerLabels.get (pointerId); //get the label of each pointer from the hashmap
+                        //    Log.d ("BG", "Pointer " + label + " move at (" + event.getX (i) + ", " + event.getY (i) + ")"); //log the label and position of each pointer
+                        //}
                         break;
                     case MotionEvent.ACTION_UP: //the last pointer goes up
                     case MotionEvent.ACTION_POINTER_UP: //a non-primary pointer goes up
                         int label = pointerLabels.get (pointerId); //get the label of the pointer that went up from the hashmap
-                        Log.d ("BG", "Pointer " + label + " up at (" + event.getX (pointerIndex) + ", " + event.getY (pointerIndex) + ")"); //log the label and position of the pointer that went up
+                        //Log.d ("BG", "Pointer " + label + " up at (" + event.getX (pointerIndex) + ", " + event.getY (pointerIndex) + ")"); //log the label and position of the pointer that went up
                         pointerLabels.remove (pointerId); //remove the mapping between pointer ID and label from the hashmap
                         break;
                 }
+                try {
+                    saveSamples(event, "background");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
                 return true;
             }
         });
-        pointerLabels = new HashMap<> (); //initialize the hashmap
+//        pointerLabels = new HashMap<> (); //initialize the hashmap
+        pointerLabels = new SparseArray<Integer>(20); //initialize pointerLabels with an initial capacity of 10
         currentLabel = 1; //initialize the current label value
+        pointerLabelsCarrot = new SparseArray<Integer>(20); //initialize pointerLabels with an initial capacity of 10
+        currentLabelCarrot = 1; //initialize the current label value
 
         beginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                viewGuide("hide");
                 offsetBunnyPath = (int) Math.floor(Math.abs(path_image.getHeight() - bunny.getHeight()) / 2);
                 offsetCarrotPath = (int) Math.floor(Math.abs(path_image.getHeight() - carrot.getHeight()) / 2);
                 nextTrial();
             }
         });
 
+        nextBlockButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                viewGuide("show");
+                viewInterblock("hide");
+            }
+        });
+
         final GameState bunnyGame = new GameState();
         //  final CanvasView mCanvasView = new CanvasView(this, bunnyGame);
         viewGame("hide");
-
+        viewGuide("show");
+        viewInterblock("hide");
         // Get the participant ID and the experimental condition from the intent that started this activity
         Intent intent = getIntent();
         participantID = intent.getStringExtra("participantID");
@@ -226,14 +260,19 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
     @Override
     public boolean onTouch (View v, MotionEvent event) {
         if (v == carrot) { //check if the view that was touched is the imageview of a carrot
+            int action = event.getActionMasked();
+            int pointerIndex = event.getActionIndex();
+            int pointerID = event.getPointerId(pointerIndex);
 
-
-            switch (event.getAction ()) { //get the action of the touch event
+            switch (action) { //get the action of the touch event
                 case MotionEvent.ACTION_DOWN: //the user first touches the view
                     carrotOffsetX = event.getRawX() - carrot.getX();
                     carrotOffsetY = event.getRawY() - carrot.getY();
                     carrotMove = carrotOffsetX >= 0 & carrotOffsetX <= carrot.getWidth() & carrotOffsetY >= 0 & carrotOffsetY <= carrot.getHeight();
-                    Log.d ("Carrot", "Touch down at (" + event.getX () + ", " + event.getY () + ")"); //log the xy position of the touch event
+                case MotionEvent.ACTION_POINTER_DOWN:
+                    pointerLabelsCarrot.put(pointerID, currentLabelCarrot);
+                    currentLabel++;
+                    //Log.d ("Carrot", "Touch down at (" + event.getX () + ", " + event.getY () + ")"); //log the xy position of the touch event
                     break;
                 case MotionEvent.ACTION_MOVE: //the user moves their finger on the view
                     if (carrotMove) {
@@ -266,11 +305,13 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
                         nextTrial();
                     }
                     carrot.invalidate();
-                    Log.d ("Carrot", "Touch up at (" + event.getX () + ", " + event.getY () + ")"); //log the xy position of the touch event
+                case MotionEvent.ACTION_POINTER_UP:
+                    pointerLabelsCarrot.remove(pointerID);
+                    //Log.d ("Carrot", "Touch up at (" + event.getX () + ", " + event.getY () + ")"); //log the xy position of the touch event
                     break;
             }
             try {
-                saveSamples(event);
+                saveSamples(event, "carrot");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -286,6 +327,8 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         if (endOfBlock) {
             boolean endGame = GameState.endGame();
             if (!endGame) {
+                viewGame("hide");
+                viewInterblock("show");
                 //go to the inter-block screen
                 //then start a new trial in this new block
             }
@@ -316,14 +359,31 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
             public void run() {
-                String dat = "START, " + (carrot.getX() + carrot.getWidth() / 2) + ", " + (carrot.getY() + carrot.getHeight() / 2) + ", " + carrot.getWidth() + ", " + carrot.getHeight() + ", " +
-                        (bunny.getX() + bunny.getWidth() / 2) + ", " + (bunny.getY() + bunny.getHeight() / 2) + ", " + bunny.getWidth() + ", " + bunny.getHeight() + ", " +
-                        GameState.getTrialNumber() + ", " + GameState.getBlockNumber() + ", " + path + ", " + direction;
+                StringBuilder dat = new StringBuilder();
+                dat.append("START, ")
+                        .append("CARROT").append(", ")
+                        .append(carrot.getX() + carrot.getWidth() / 2).append(", ")
+                        .append(carrot.getY() + carrot.getHeight() / 2).append(", ")
+                        .append(carrot.getWidth()).append(", ")
+                        .append(carrot.getHeight()).append(", ")
+                        .append("BUNNY").append(", ")
+                        .append((bunny.getX() + bunny.getWidth() / 2)).append(", ")
+                        .append((bunny.getY() + bunny.getHeight() / 2)).append(", ")
+                        .append(bunny.getWidth()).append(", ")
+                        .append(bunny.getHeight()).append(", ")
+                        .append(GameState.getTrialNumber()).append(", ")
+                        .append(GameState.getBlockNumber()).append(", ")
+                        .append(path).append(", ")
+                        .append(direction);
+
+                        //String dat = "START, " + (carrot.getX() + carrot.getWidth() / 2) + ", " + (carrot.getY() + carrot.getHeight() / 2) + ", " + carrot.getWidth() + ", " + carrot.getHeight() + ", " +
+                        //(bunny.getX() + bunny.getWidth() / 2) + ", " + (bunny.getY() + bunny.getHeight() / 2) + ", " + bunny.getWidth() + ", " + bunny.getHeight() + ", " +
+                        //GameState.getTrialNumber() + ", " + GameState.getBlockNumber() + ", " + path + ", " + direction;
                // Intent eventIntent = new Intent("EVENT_DATA");
                // eventIntent.putExtra("eventData", dat);
                // sendBroadcast(eventIntent);
                // Log.d(TAG, "event = " + dat);
-                WriteDatToFile(File_Event, dat);
+                WriteDatToFile(File_Event, dat.toString());
                 viewGame("show");
             }
         }, 2000);
@@ -338,28 +398,93 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         carrot.setVisibility(vis);
         path_image.setVisibility(vis);
     }
+    private void viewGuide(String showhide){
+        int vis = View.VISIBLE;
+        if (showhide.equals("hide")){
+            vis = View.INVISIBLE;
+        }
+        guide.setVisibility(vis);
+        beginButton.setVisibility(vis);
+    }
+    private void viewInterblock(String showhide){
+        int vis = View.VISIBLE;
+        if (showhide.equals("hide")){
+            vis = View.INVISIBLE;
+        }
+        viewBunnyCheerFive(showhide);
+        nextBlockButton.setVisibility(vis);
+    }
+
+    private void viewBunnyCheerFive(String showhide){
+        int vis = View.VISIBLE;
+        if (showhide.equals("hide")){
+            vis = View.INVISIBLE;
+        }
+        bunnyCheer1.setVisibility(vis);
+        bunnyCheer2.setVisibility(vis);
+        bunnyCheer3.setVisibility(vis);
+        bunnyCheer4.setVisibility(vis);
+        bunnyCheer5.setVisibility(vis);
+        switch (vis) {
+            case View.VISIBLE:
+                bunnyCheerAnim1.start();
+                bunnyCheerAnim2.start();
+                bunnyCheerAnim3.start();
+                bunnyCheerAnim4.start();
+                bunnyCheerAnim5.start();
+                break;
+            case View.INVISIBLE:
+                bunnyCheerAnim1.stop();
+                bunnyCheerAnim2.stop();
+                bunnyCheerAnim3.stop();
+                bunnyCheerAnim4.stop();
+                bunnyCheerAnim5.stop();
+                break;
+        }
+
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
-    void saveSamples(MotionEvent ev) throws IOException {
+    void saveSamples(MotionEvent ev, String imagetype) throws IOException {
         final int historySize = ev.getHistorySize();
         final int pointerCount = ev.getPointerCount();
-        String mydat = "";
+        StringBuilder sb = new StringBuilder();
+        float offsetX = ev.getRawX() - ev.getX(); //historical x/y are only relative to the view, not rawx/y. So calc offsets and apply to the getHistoricalX/Y
+        float offsetY = ev.getRawY() - ev.getY();
         for (int h = 0; h < historySize; h++) {
             long htime = ev.getHistoricalEventTime(h);
             for (int p = 0; p < pointerCount; p++) {
-                mydat = mydat+htime + ", " + ev.getPointerId(p) +", "+ ev.getHistoricalX(p,h) + ", " + ev.getHistoricalY(p,h) + ", " + ev.getHistoricalTouchMajor(p,h) + ", " + ev.getHistoricalTouchMinor(p,h) + ", " + ev.getHistoricalTouchMajor(p,h)/2 * ev.getHistoricalTouchMinor(p,h)/2 * Math.PI + ", " + ev.getHistoricalPressure(p,h) + "\n";
+                int pointerID = ev.getPointerId(p);
+                int pointerLabel = pointerLabels.get(pointerID);
+                sb.append(htime).append(", ")
+                        .append(pointerLabel).append(", ")
+                        .append(imagetype).append(", ")
+                        .append(ev.getHistoricalX(p,h)+offsetX).append(", ")
+                        .append(ev.getHistoricalY(p,h)+offsetY).append(", ")
+                        .append(ev.getHistoricalTouchMajor(p,h)).append(", ")
+                        .append(ev.getHistoricalTouchMinor(p,h)).append(", ")
+                        .append(ev.getHistoricalTouchMajor(p,h)/2 * ev.getHistoricalTouchMinor(p,h)/2 * Math.PI).append(", ")
+                        .append(ev.getHistoricalPressure(p,h)).append("\n");
             }
         }
         long evtime = ev.getEventTime();
         for (int p = 0; p < pointerCount; p++) {
-            mydat = mydat+evtime + ", " + ev.getPointerId(p) +", "+ ev.getRawX(p) + ", " + ev.getRawY(p) + ", " + ev.getTouchMajor(p) + ", " + ev.getTouchMinor(p) + ", " + ev.getTouchMajor(p)/2 * ev.getTouchMinor(p)/2 * Math.PI + ", " + ev.getPressure(p) + "\n";
+            int pointerID = ev.getPointerId(p);
+            int pointerLabel = pointerLabels.get(pointerID);
+            sb.append(evtime).append(", ")
+                    .append(pointerLabel).append(", ")
+                    .append(imagetype).append(", ")
+                    .append(ev.getRawX(p)).append(", ")
+                    .append(ev.getRawY(p)).append(", ")
+                    .append(ev.getTouchMajor(p)).append(", ")
+                    .append(ev.getTouchMinor(p)).append(", ")
+                    .append(ev.getTouchMajor(p)/2 * ev.getTouchMinor(p)/2 * Math.PI).append(", ")
+                    .append(ev.getPressure(p)).append("\n");
         }
         // Write the data to the buffered output stream as bytes
-        bos.write(mydat.getBytes());
+        bos.write(sb.toString().getBytes());
         // Flush the buffered output stream to ensure that all data is written to the file output stream
         bos.flush();
-
-//        WriteToFile(File_Touch,mydat);
     }
 
     private void WriteDatToFile(File WriteFile, String data) {
@@ -386,22 +511,51 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         String currentDateandTime = sdf.format(new Date());
 
         //e.g., participantID = 9999;
-        String filename_event = currentDateandTime + "_sub" + participantID + "_event.csv";
-        String filename_accel = currentDateandTime + "_sub" + participantID + "_accel.csv";
-        String filename_touch = currentDateandTime + "_sub" + participantID + "_touch.csv";
+        StringBuilder filename_event = new StringBuilder();
+        StringBuilder filename_accel = new StringBuilder();
+        StringBuilder filename_touch = new StringBuilder();
+        filename_event.append(currentDateandTime)
+                .append("_sub").append(participantID)
+                .append("_event.csv");
+        filename_accel.append(currentDateandTime)
+                .append("_sub").append(participantID)
+                .append("_accel.csv");
+        filename_touch.append(currentDateandTime)
+                .append("_sub").append(participantID)
+                .append("_touch.csv");
+
+//        String filename_event = currentDateandTime + "_sub" + participantID + "_event.csv";
+//        String filename_accel = currentDateandTime + "_sub" + participantID + "_accel.csv";
+//        String filename_touch = currentDateandTime + "_sub" + participantID + "_touch.csv";
 
         long time = System.currentTimeMillis();
-        String header_boottime = "BOOT_TIME_EPOCH " + time + "\nBOOT_UPTIME_MILLIS " + uptimeMillis();
-        String header_time = "time";
-        String header_event = "event_marker, " +
-                "start_item_center_x, start_item_center_y, start_item_width, start_item_height, " +
-                "end_item_center_x, end_item_center_y, end_item_width, end_item_height, path_type";
-        String header_accel = "accel_x, accel_y, accel_z"; // landscape tablet, x is along short height, y is along long width, z is through the tablet.
-        String header_touch = "touch_ID, touch_x, touch_y, touch_max_diameter, touch_min_diameter, touch_area, touch_pressure";
+        StringBuilder header_boottime = new StringBuilder();
+        header_boottime.append("BOOT_TIME_EPOCH").append(time)
+                .append("\nBOOT_UPTIME_MILLIS ").append(uptimeMillis());
 
-        String header_eventfile = header_boottime + "\n" + header_time + ", " + header_event + "\n";
-        String header_accelfile = header_boottime + "\n" + header_time + ", " + header_accel + "\n";
-        String header_touchfile = header_boottime + "\n" + header_time + ", " + header_touch + "\n";
+//        String header_boottime = "BOOT_TIME_EPOCH " + time + "\nBOOT_UPTIME_MILLIS " + uptimeMillis();
+        String header_time = "time";
+        String header_event = "event_marker, start_item_name, start_item_center_x, start_item_center_y, start_item_width, start_item_height, " +
+                "end_item_name, end_item_center_x, end_item_center_y, end_item_width, end_item_height, trial_number, block_number, path_type, path_direction";
+        String header_accel = "accel_x, accel_y, accel_z"; // landscape tablet, x is along short height, y is along long width, z is through the tablet.
+        String header_touch = "touch_ID, touch_image, touch_x, touch_y, touch_max_diameter, touch_min_diameter, touch_area, touch_pressure";
+
+        StringBuilder header_eventfile = new StringBuilder();
+        header_eventfile.append(header_boottime).append("\n")
+                .append(header_time).append(", ")
+                .append(header_event).append("\n");
+        StringBuilder header_accelfile = new StringBuilder();
+        header_accelfile.append(header_boottime).append("\n")
+                .append(header_time).append(", ")
+                .append(header_accel).append("\n");
+        StringBuilder header_touchfile = new StringBuilder();
+        header_touchfile.append(header_boottime).append("\n")
+                .append(header_time).append(", ")
+                .append(header_touch).append("\n");
+
+//        String header_eventfile = header_boottime + "\n" + header_time + ", " + header_event + "\n";
+//        String header_accelfile = header_boottime + "\n" + header_time + ", " + header_accel + "\n";
+//        String header_touchfile = header_boottime + "\n" + header_time + ", " + header_touch + "\n";
 
         boolean goodsave = TRUE;
 
@@ -414,30 +568,30 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         else
 
         {
-            File_Event = new File(getExternalFilesDir(filepath), filename_event);
+            File_Event = new File(getExternalFilesDir(filepath), filename_event.toString());
             try {
                 FileOutputStream fos = new FileOutputStream(File_Event, false);
-                fos.write(header_eventfile.getBytes());
+                fos.write(header_eventfile.toString().getBytes());
                 fos.close();
             } catch (IOException e) {
                 e.printStackTrace();
                 goodsave = FALSE;
             }
 
-            File_Accel = new File(getExternalFilesDir(filepath), filename_accel);
+            File_Accel = new File(getExternalFilesDir(filepath), filename_accel.toString());
             try {
                 FileOutputStream fos = new FileOutputStream(File_Accel, false);
-                fos.write(header_accelfile.getBytes());
+                fos.write(header_accelfile.toString().getBytes());
                 fos.close();
             } catch (IOException e) {
                 e.printStackTrace();
                 goodsave = FALSE;
             }
 
-            File_Touch = new File(getExternalFilesDir(filepath), filename_touch);
+            File_Touch = new File(getExternalFilesDir(filepath), filename_touch.toString());
             try {
                 FileOutputStream fos = new FileOutputStream(File_Touch, false);
-                fos.write(header_touchfile.getBytes());
+                fos.write(header_touchfile.toString().getBytes());
                 fos.close();
             } catch (IOException e) {
                 e.printStackTrace();
