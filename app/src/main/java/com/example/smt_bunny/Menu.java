@@ -1,12 +1,15 @@
 package com.example.smt_bunny;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
@@ -24,9 +27,20 @@ public class Menu extends AppCompatActivity {
     private TextView inputID;
     private ToggleButton conditionToggle;
     private boolean conditionIsCurved = false;
+    private String startingPath = "null";
+    private String startingDir = "null";
     private String straightStartingDirection = "leftright";
     private String curvedStartingDirection = "leftright";
     private String participantID;
+
+    private TextView dirLabel;
+    private TextView pathLabel;
+    private RadioGroup radioGroupDir;
+    private RadioGroup radioGroupPath;
+    private RadioButton radioDirLtoR;
+    private RadioButton radioDirRtoL;
+    private RadioButton radioPathStraight;
+    private RadioButton radioPathCurved;
 
     private boolean idComplete = false;
     private boolean practiceComplete = false;
@@ -46,6 +60,16 @@ public class Menu extends AppCompatActivity {
         inputIDlabel = findViewById(R.id.inputIDlabel);
         inputID = findViewById(R.id.editTextID);
         conditionToggle = findViewById(R.id.conditionToggle);
+
+        dirLabel = findViewById(R.id.dirlabel);
+        radioGroupDir = findViewById(R.id.radio_group_direction);
+        radioDirLtoR = findViewById(R.id.radio_direction_left_to_right);
+        radioDirRtoL = findViewById(R.id.radio_direction_right_to_left);
+        pathLabel = findViewById(R.id.pathlabel);
+        radioGroupPath = findViewById(R.id.radio_group_path);
+        radioPathStraight = findViewById(R.id.radio_path_straight);
+        radioPathCurved = findViewById(R.id.radio_path_curved);
+
         setButtonVisibility();
 
         // Set up listeners for buttons
@@ -86,6 +110,52 @@ public class Menu extends AppCompatActivity {
                 conditionIsCurved = isChecked;
             }
         });
+
+        radioGroupPath.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                // Check which radio button was selected
+                switch(checkedId) {
+                    case R.id.radio_path_straight:
+                        // Set path variable to "straight"
+                        radioPathStraight.setTextColor(Color.RED);
+                        radioPathCurved.setTextColor(Color.GRAY);
+                        startingPath = "straight";
+
+                        break;
+                    case R.id.radio_path_curved:
+                        // Set path variable to "curved"
+                        radioPathStraight.setTextColor(Color.GRAY);
+                        radioPathCurved.setTextColor(Color.RED);
+                        startingPath = "curved";
+                        break;
+                }
+            }
+        });
+        radioGroupDir.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                // Check which radio button was selected
+                switch(checkedId) {
+                    case R.id.radio_direction_left_to_right:
+                        // Set path variable to "straight"
+                        radioDirLtoR.setTextColor(Color.RED);
+                        radioDirRtoL.setTextColor(Color.GRAY);
+                        startingDir = "leftright";
+
+
+                        break;
+                    case R.id.radio_direction_right_to_left:
+                        // Set path variable to "curved"
+                        radioDirLtoR.setTextColor(Color.GRAY);
+                        radioDirRtoL.setTextColor(Color.RED);
+                        startingDir = "rightleft";
+                        break;
+                }
+            }
+        });
+
+
     }
 
     private void setButtonVisibility() {
@@ -98,7 +168,11 @@ public class Menu extends AppCompatActivity {
         practiceButton.setVisibility(pvis);
         //if practice complete, enable the experiment
         experimentButton.setVisibility(evis);
-        conditionToggle.setVisibility(evis);
+        radioGroupDir.setVisibility(evis);
+        radioGroupPath.setVisibility(evis);
+        dirLabel.setVisibility(evis);
+        pathLabel.setVisibility(evis);
+        //conditionToggle.setVisibility(evis);
 
     }
 
@@ -108,8 +182,12 @@ public class Menu extends AppCompatActivity {
     }
 
     private void startExperimentActivity() {
-        // Create an intent to start the main experiment activity
-        Intent intent = new Intent(Menu.this, Experiment.class);
+        if(startingDir.equals("null") | startingPath.equals("null")){
+            //error, one of the conditions not set
+        } else {
+            // Create an intent to start the main experiment activity
+            Intent intent = new Intent(Menu.this, Experiment.class);
+
         /*
         // Get the experimental condition from the radio button group
         int conditionRadioButtonId = conditionRadioGroup.getCheckedRadioButtonId();
@@ -126,21 +204,16 @@ public class Menu extends AppCompatActivity {
                 break;
         }
         */
-        String condition = "";
-        if (conditionIsCurved) {
-            condition = "curved";
-        } else {
-            condition = "straight";
+
+
+            // Put the participant ID and the experimental condition as extras in the intent
+            intent.putExtra("participantID", participantID);
+            intent.putExtra("startingPath", startingPath);
+            intent.putExtra("straightDir1", startingDir);//straightStartingDirection);
+            intent.putExtra("curvedDir1", startingDir);//curvedStartingDirection);
+
+            // Start the main experiment activity
+            startActivity(intent);
         }
-
-
-        // Put the participant ID and the experimental condition as extras in the intent
-        intent.putExtra("participantID", participantID);
-        intent.putExtra("condition", condition);
-        intent.putExtra("straightDir1", straightStartingDirection);
-        intent.putExtra("curvedDir1", curvedStartingDirection);
-
-        // Start the main experiment activity
-        startActivity(intent);
     }
 }

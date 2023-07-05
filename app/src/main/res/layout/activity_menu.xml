@@ -78,8 +78,96 @@
         android:textOff="CONDITION: \nSTRAIGHT FIRST"
         android:textOn="CONDITION: \nCURVED FIRST"
         android:textSize="36dp"
+        android:visibility="invisible"
         app:layout_constraintStart_toEndOf="@id/experimentButton"
-        app:layout_constraintTop_toTopOf="@+id/experimentButton" />
+        app:layout_constraintTop_toTopOf="parent" />
 
+    <TextView
+        android:id="@+id/dirlabel"
+        android:layout_width="300dp"
+        android:layout_height="48dp"
+        android:layout_weight="1"
+        android:gravity = "center"
+        android:background="@android:color/white"
+        android:textColor="@android:color/black"
+        android:text="STARTING DIRECTION"
+        android:textSize="24dp"
+        app:layout_constraintStart_toStartOf="@id/radio_group_direction"
+        app:layout_constraintBottom_toTopOf="@id/radio_group_direction" />
+    <RadioGroup
+        android:id="@+id/radio_group_direction"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="96dp"
+        android:layout_marginLeft="96dp"
+        android:layout_width="300dp"
+        android:orientation="vertical"
+        app:layout_constraintStart_toEndOf="@id/experimentButton"
+        app:layout_constraintTop_toTopOf="@id/experimentButton">
+
+        <RadioButton
+            android:id="@+id/radio_direction_left_to_right"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:text="LEFT-TO-RIGHT"
+            android:textSize="36dp"
+            android:textColor="@android:color/black"
+            android:background="@android:color/white"
+            android:checked="false" />
+
+        <RadioButton
+            android:id="@+id/radio_direction_right_to_left"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:text="RIGHT-TO-LEFT"
+            android:textSize="36dp"
+            android:textColor="@android:color/black"
+            android:background="@android:color/white"
+            android:checked="false" />
+    </RadioGroup>
+
+    <TextView
+        android:id="@+id/pathlabel"
+        android:layout_width="300dp"
+        android:layout_height="48dp"
+        android:layout_weight="1"
+        android:gravity = "center"
+        android:background="@android:color/white"
+        android:textColor="@android:color/black"
+        android:text="STARTING PATH"
+        android:textSize="24dp"
+        app:layout_constraintStart_toStartOf="@id/radio_group_path"
+        app:layout_constraintBottom_toTopOf="@id/radio_group_path" />
+
+    <RadioGroup
+        android:id="@+id/radio_group_path"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="96dp"
+        android:layout_marginLeft="96dp"
+        android:layout_marginBottom="64dp"
+        android:orientation="vertical"
+        app:layout_constraintStart_toEndOf="@id/experimentButton"
+        app:layout_constraintBottom_toTopOf="@id/dirlabel">
+
+        <RadioButton
+            android:id="@+id/radio_path_straight"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:text="STRAIGHT PATH"
+            android:textSize="36dp"
+            android:textColor="@android:color/black"
+            android:background="@android:color/white"
+            android:checked="false" />
+
+        <RadioButton
+            android:id="@+id/radio_path_curved"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:text="CURVED PATH"
+            android:textSize="36dp"
+            android:textColor="@android:color/black"
+            android:background="@android:color/white"
+            android:checked="false" />
+    </RadioGroup>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

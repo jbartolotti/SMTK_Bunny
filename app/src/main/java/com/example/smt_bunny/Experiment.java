@@ -1,34 +1,31 @@
 package com.example.smt_bunny;
 
 import static android.os.SystemClock.uptimeMillis;
-import static com.example.smt_bunny.R.id.bunnyCheerSingle;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
-import static java.lang.Math.floor;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.viewpager.widget.ViewPager;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.graphics.drawable.AnimationDrawable;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -37,13 +34,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Observer;
 import java.util.Random;
 
 public class Experiment extends AppCompatActivity implements View.OnTouchListener {
 
+    private static final int FLIP_HORIZONTAL = 100;
     ConstraintLayout myLayout;
 
     // Files
@@ -55,6 +51,7 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
 
     private Button beginButton;
     private Button nextBlockButton;
+    private Button quitButton;
 
     // Define some fields for your views and widgets
     //private CanvasView canvasView;
@@ -74,10 +71,10 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
     private float carrotOffsetX;
     private float carrotOffsetY;
     private SparseArray<Integer> pointerLabels;
-    private SparseArray<Integer> pointerLabelsCarrot;
+    //private SparseArray<Integer> pointerLabelsCarrot;
     //private HashMap<Integer, Integer> pointerLabels; //the hashmap to store the mapping between pointer IDs and labels
     private int currentLabel; //the current label value
-    private int currentLabelCarrot; //the current label value for the carrot touches
+    //private int currentLabelCarrot; //the current label value for the carrot touches
 
 
     // Game Elements
@@ -88,6 +85,15 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
     private ImageView bunny;
     private ImageView carrot_default;
     private ImageView carrot;
+
+    private boolean bunny_brown_canflip = TRUE;
+    private boolean carrot_default_canflip = FALSE;
+    private boolean bunny_canflip;
+    private boolean carrot_canflip;
+    private Bitmap bunny_original;
+    private Bitmap bunny_flip;
+    private Bitmap carrot_original;
+    private Bitmap carrot_flip;
 
     public ImageView bunnyCheer;
     public AnimationDrawable bunnyCheerAnim;
@@ -101,11 +107,16 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
     public AnimationDrawable bunnyCheerAnim4;
     public ImageView bunnyCheer5;
     public AnimationDrawable bunnyCheerAnim5;
+    public TextView thankyoucheer;
 
     private ImageView path_straight_1600;
     private ImageView path_curved_1600;
     private ImageView path_image;
     private ImageView guide_curve_toright;
+    private ImageView guide_curve_toleft;
+    private ImageView guide_straight_toright;
+    private ImageView guide_straight_toleft;
+
     private ImageView guide;
 
     private int offsetCarrotPath;
@@ -118,6 +129,8 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
         // Set the layout file for this activity
         setContentView(R.layout.activity_experiment);
         myLayout = findViewById(R.id.experimentLayout);
@@ -128,8 +141,12 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         bunny_brown = findViewById(R.id.bunny_brown);
         carrot_default = findViewById(R.id.carrot_default);
         guide_curve_toright = findViewById(R.id.guide_curve_toright);
+        guide_curve_toleft = findViewById(R.id.guide_curve_toleft);
+        guide_straight_toright = findViewById(R.id.guide_line_toright);
+        guide_straight_toleft = findViewById(R.id.guide_line_toleft);
         beginButton = findViewById(R.id.beginButton);
         nextBlockButton = findViewById(R.id.nextBlockButton);
+        quitButton = findViewById(R.id.quitButton);
         guide = guide_curve_toright;
 
  //   bunnyCheer  = findViewById(R.id.bunnyCheerSingle);
@@ -145,14 +162,30 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
     bunnyCheerAnim4 = (AnimationDrawable) bunnyCheer4.getDrawable();
     bunnyCheer5  = findViewById(R.id.bunnyCheer5);
     bunnyCheerAnim5 = (AnimationDrawable) bunnyCheer5.getDrawable();
+    thankyoucheer = findViewById(R.id.thankyoucheer);
 
         path_straight_1600 = findViewById(R.id.path_straight_1600);
         path_curved_1600 = findViewById(R.id.path_curved_1600);
 
         bg = bg_grass;
         bunny = bunny_brown;
+        bunny_canflip = bunny_brown_canflip;
         carrot = carrot_default;
+        carrot_canflip = carrot_default_canflip;
         path_image = path_curved_1600;
+
+        bunny_original = ((BitmapDrawable)bunny.getDrawable()).getBitmap();
+        carrot_original = ((BitmapDrawable)carrot.getDrawable()).getBitmap();
+        if(bunny_canflip) {
+            bunny_flip = flip(bunny_original, FLIP_HORIZONTAL);
+        } else{
+            bunny_flip = bunny_original;
+        }
+        if(carrot_canflip){
+            carrot_flip = flip(carrot_original, FLIP_HORIZONTAL);
+        } else{
+            carrot_flip = carrot_original;
+        }
 
         carrot.setOnTouchListener(this);
 
@@ -164,15 +197,24 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
                 int action = event.getActionMasked (); //get the masked action of the touch event
                 int pointerIndex = event.getActionIndex (); //get the index of the pointer associated with the action
                 int pointerId = event.getPointerId (pointerIndex); //get the ID of the pointer associated with the action
+                boolean removeLabel = FALSE;
+                String actionName = "UNKNOWN_ACTION";
 
                 switch (action) { //handle different actions
                     case MotionEvent.ACTION_DOWN: //the first pointer goes down
+                        actionName = "TOUCH_START";
+                        pointerLabels.put (pointerId, currentLabel); //put the mapping between pointer ID and label in the hashmap
+                        //  Log.d ("BG", "Pointer " + currentLabel + " down at (" + event.getX (pointerIndex) + ", " + event.getY (pointerIndex) + ")"); //log the label and position of the pointer
+                        currentLabel++; //increment the current label value
+                        break;
                     case MotionEvent.ACTION_POINTER_DOWN: //a subsequent pointer goes down
+                        actionName = "SECONDARY_TOUCH_START";
                         pointerLabels.put (pointerId, currentLabel); //put the mapping between pointer ID and label in the hashmap
                       //  Log.d ("BG", "Pointer " + currentLabel + " down at (" + event.getX (pointerIndex) + ", " + event.getY (pointerIndex) + ")"); //log the label and position of the pointer
                         currentLabel++; //increment the current label value
                         break;
                     case MotionEvent.ACTION_MOVE: //a pointer moves
+                        actionName = "TOUCH_MOVE";
                         //for (int i = 0; i < event.getPointerCount (); i++) { //loop through all pointers
                          //   pointerId = event.getPointerId (i); //get the ID of each pointer
                          //   int label = pointerLabels.get (pointerId); //get the label of each pointer from the hashmap
@@ -180,26 +222,39 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
                         //}
                         break;
                     case MotionEvent.ACTION_UP: //the last pointer goes up
+                        actionName = "TOUCH_END";
+                        removeLabel = TRUE; //flag to remove the label, after saveSamples
+                        break;
                     case MotionEvent.ACTION_POINTER_UP: //a non-primary pointer goes up
-                        int label = pointerLabels.get (pointerId); //get the label of the pointer that went up from the hashmap
+                        actionName = "SECONDARY_TOUCH_END";
+                        removeLabel = TRUE;
+                        //int label = pointerLabels.get (pointerId); //get the label of the pointer that went up from the hashmap
                         //Log.d ("BG", "Pointer " + label + " up at (" + event.getX (pointerIndex) + ", " + event.getY (pointerIndex) + ")"); //log the label and position of the pointer that went up
-                        pointerLabels.remove (pointerId); //remove the mapping between pointer ID and label from the hashmap
                         break;
                 }
                 try {
-                    saveSamples(event, "background");
+                    saveSamples(event, "background", actionName);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
+                if(removeLabel){
+                    pointerLabels.remove (pointerId); //remove the mapping between pointer ID and label from the hashmap
+                }
                 return true;
             }
         });
 //        pointerLabels = new HashMap<> (); //initialize the hashmap
         pointerLabels = new SparseArray<Integer>(20); //initialize pointerLabels with an initial capacity of 10
         currentLabel = 1; //initialize the current label value
-        pointerLabelsCarrot = new SparseArray<Integer>(20); //initialize pointerLabels with an initial capacity of 10
-        currentLabelCarrot = 1; //initialize the current label value
+        //pointerLabelsCarrot = new SparseArray<Integer>(20); //initialize pointerLabels with an initial capacity of 10
+        //currentLabelCarrot = 1; //initialize the current label value
+
+        quitButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+            finishAffinity();
+            }
+        });
 
         beginButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -221,13 +276,12 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
 
         final GameState bunnyGame = new GameState();
         //  final CanvasView mCanvasView = new CanvasView(this, bunnyGame);
-        viewGame("hide");
-        viewGuide("show");
-        viewInterblock("hide");
+        quitButton.setVisibility(View.INVISIBLE);
+
         // Get the participant ID and the experimental condition from the intent that started this activity
         Intent intent = getIntent();
         participantID = intent.getStringExtra("participantID");
-        startingCondition = intent.getStringExtra("condition");
+        startingCondition = intent.getStringExtra("startingPath");
         straightStartingDirection = intent.getStringExtra("straightDir1");
         curvedStartingDirection = intent.getStringExtra("curvedDir1");
 
@@ -250,8 +304,10 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         service.putExtra("can_record", can_record);
         startService(service);
 
-
         GameState.initialize(startingCondition, straightStartingDirection, curvedStartingDirection);
+        viewGame("hide");
+        viewGuide("show");
+        viewInterblock("hide");
     }
 
 
@@ -263,18 +319,27 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
             int action = event.getActionMasked();
             int pointerIndex = event.getActionIndex();
             int pointerID = event.getPointerId(pointerIndex);
+            boolean removeLabel = FALSE;
+            String actionName = null;
+
 
             switch (action) { //get the action of the touch event
                 case MotionEvent.ACTION_DOWN: //the user first touches the view
+                    actionName = "TOUCH_START";
                     carrotOffsetX = event.getRawX() - carrot.getX();
                     carrotOffsetY = event.getRawY() - carrot.getY();
                     carrotMove = carrotOffsetX >= 0 & carrotOffsetX <= carrot.getWidth() & carrotOffsetY >= 0 & carrotOffsetY <= carrot.getHeight();
+                    pointerLabels.put(pointerID, currentLabel);
+                    currentLabel++;
+                    break;
                 case MotionEvent.ACTION_POINTER_DOWN:
-                    pointerLabelsCarrot.put(pointerID, currentLabelCarrot);
+                    actionName = "SECONDARY_TOUCH_START";
+                    pointerLabels.put(pointerID, currentLabel);
                     currentLabel++;
                     //Log.d ("Carrot", "Touch down at (" + event.getX () + ", " + event.getY () + ")"); //log the xy position of the touch event
                     break;
                 case MotionEvent.ACTION_MOVE: //the user moves their finger on the view
+                    actionName = "TOUCH_MOVE";
                     if (carrotMove) {
                         carrot.setX(event.getRawX() - carrotOffsetX);
                         carrot.setY(event.getRawY() - carrotOffsetY);
@@ -282,6 +347,7 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
                     carrot.invalidate();
                     break;
                 case MotionEvent.ACTION_UP: //the user lifts their finger from the view
+                    actionName = "TOUCH_END";
                     //snap carrot's position if it's offscreen
                     if (carrot.getX() < 0) {
                         carrot.setX(0); //Carrot is too far left, bring back
@@ -305,32 +371,46 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
                         nextTrial();
                     }
                     carrot.invalidate();
+                    removeLabel = TRUE;
+                    break;
                 case MotionEvent.ACTION_POINTER_UP:
-                    pointerLabelsCarrot.remove(pointerID);
+                    actionName = "SECONDARY_TOUCH_END";
+                    removeLabel = TRUE; //Remove it after saving the sample so that the pointer ID can get recorded.
                     //Log.d ("Carrot", "Touch up at (" + event.getX () + ", " + event.getY () + ")"); //log the xy position of the touch event
                     break;
             }
             try {
-                saveSamples(event, "carrot");
+                saveSamples(event, "carrot", actionName);
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+            if(removeLabel) {
+                pointerLabels.remove(pointerID);
             }
             return true; //return true to indicate that the touch event was handled
         }
         return false; //return false to indicate that the touch event was not handled (because it wasn't the carrot)
     }
 
+    @Override
+    public void onBackPressed() {
+        // do nothing
+    }
+
+
     private void nextTrial() {
         viewGame("hide");
-
+        currentLabel = 1000; //just in case there are touches between trials that don't get lifted before trial starts, they'll get the 1000 label
         boolean endOfBlock = GameState.incrementTrial();
         if (endOfBlock) {
             boolean endGame = GameState.endGame();
-            if (!endGame) {
-                viewGame("hide");
-                viewInterblock("show");
-                //go to the inter-block screen
-                //then start a new trial in this new block
+            viewGame("hide");
+            viewInterblock("show");
+            //go to the inter-block screen
+            //then start a new trial in this new block
+            if (endGame) {
+                nextBlockButton.setVisibility(View.INVISIBLE);
+                quitButton.setVisibility(View.VISIBLE);
             }
         } else {
             path = GameState.getCurrentPathType();
@@ -340,16 +420,48 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         }
     }
     private void startTrial(final String path, final String direction){
+        currentLabel = 1; //reset the touch counter
+        int carrotX = 0;
+        int bunnyX = 0;
+        switch(direction){
+            case "leftright":
+                switch(path){
+                    case "straight":
+                        carrotX = 0;
+                        bunnyX = screenWidth - bunny.getWidth();
+                        path_image = path_straight_1600;
+                        break;
+                    case "curved":
+                        carrotX = 0;
+                        bunnyX = 1345;
+                        path_image = path_curved_1600;
+                        break;
+                }
+                bunny.setImageBitmap(bunny_original);
+                carrot.setImageBitmap(carrot_original);
+                break;
+            case "rightleft":
+                switch(path) {
+                    case "straight":
+                        carrotX = screenWidth - carrot.getWidth();
+                        bunnyX = 0;
+                        path_image = path_straight_1600;
+                        break;
+                    case "curved":
+                        carrotX = 1345;
+                        bunnyX = 0;
+                        path_image = path_curved_1600;
+                        break;
+                }
+                bunny.setImageBitmap(bunny_flip);
+                carrot.setImageBitmap(carrot_flip);
+                break;
+        }
 
         // Set X Locations of all
-        carrot.setX(0);
+        carrot.setX(carrotX);
+        bunny.setX(bunnyX);
         path_image.setX(0);
-        if (path.equals("curved")){
-            bunny.setX(1345);
-
-        } else{
-            bunny.setX(screenWidth - bunny.getWidth());
-        }
 
         int ytop = r.nextInt(screenHeight - path_image.getHeight()) + 1;
         carrot.setY(ytop + offsetCarrotPath);
@@ -399,12 +511,42 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         path_image.setVisibility(vis);
     }
     private void viewGuide(String showhide){
+        setGuide();
         int vis = View.VISIBLE;
         if (showhide.equals("hide")){
             vis = View.INVISIBLE;
         }
+        guide_straight_toright.setVisibility(View.INVISIBLE);
+        guide_straight_toleft.setVisibility(View.INVISIBLE);
+        guide_curve_toright.setVisibility(View.INVISIBLE);
+        guide_curve_toleft.setVisibility(View.INVISIBLE);
+
         guide.setVisibility(vis);
         beginButton.setVisibility(vis);
+    }
+    private void setGuide() {
+        switch (GameState.getCurrentPathType()) {
+            case "straight":
+                switch (GameState.getCurrentDirection()) {
+                    case "leftright":
+                        guide = guide_straight_toright;
+                        break;
+                    case "rightleft":
+                        guide = guide_straight_toleft;
+                        break;
+                }
+                break;
+            case "curved":
+                switch (GameState.getCurrentDirection()) {
+                    case "leftright":
+                        guide = guide_curve_toright;
+                        break;
+                    case "rightleft":
+                        guide = guide_curve_toleft;
+                        break;
+                }
+                break;
+        }
     }
     private void viewInterblock(String showhide){
         int vis = View.VISIBLE;
@@ -413,6 +555,7 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         }
         viewBunnyCheerFive(showhide);
         nextBlockButton.setVisibility(vis);
+        thankyoucheer.setVisibility(vis);
     }
 
     private void viewBunnyCheerFive(String showhide){
@@ -445,7 +588,8 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
     }
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
-    void saveSamples(MotionEvent ev, String imagetype) throws IOException {
+    void saveSamples(MotionEvent ev, String imagetype, String actionName) throws IOException {
+
         final int historySize = ev.getHistorySize();
         final int pointerCount = ev.getPointerCount();
         StringBuilder sb = new StringBuilder();
@@ -457,6 +601,7 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
                 int pointerID = ev.getPointerId(p);
                 int pointerLabel = pointerLabels.get(pointerID);
                 sb.append(htime).append(", ")
+                        .append(actionName).append(", ")
                         .append(pointerLabel).append(", ")
                         .append(imagetype).append(", ")
                         .append(ev.getHistoricalX(p,h)+offsetX).append(", ")
@@ -464,7 +609,12 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
                         .append(ev.getHistoricalTouchMajor(p,h)).append(", ")
                         .append(ev.getHistoricalTouchMinor(p,h)).append(", ")
                         .append(ev.getHistoricalTouchMajor(p,h)/2 * ev.getHistoricalTouchMinor(p,h)/2 * Math.PI).append(", ")
-                        .append(ev.getHistoricalPressure(p,h)).append("\n");
+                        .append(ev.getHistoricalPressure(p,h)).append("\n")
+                        .append(GameState.getTrialNumber()).append(", ")
+                        .append(GameState.getBlockNumber()).append(", ")
+                        .append(path).append(", ")
+                        .append(direction);
+
             }
         }
         long evtime = ev.getEventTime();
@@ -472,6 +622,7 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
             int pointerID = ev.getPointerId(p);
             int pointerLabel = pointerLabels.get(pointerID);
             sb.append(evtime).append(", ")
+                    .append(actionName).append(", ")
                     .append(pointerLabel).append(", ")
                     .append(imagetype).append(", ")
                     .append(ev.getRawX(p)).append(", ")
@@ -479,7 +630,12 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
                     .append(ev.getTouchMajor(p)).append(", ")
                     .append(ev.getTouchMinor(p)).append(", ")
                     .append(ev.getTouchMajor(p)/2 * ev.getTouchMinor(p)/2 * Math.PI).append(", ")
-                    .append(ev.getPressure(p)).append("\n");
+                    .append(ev.getPressure(p)).append("\n")
+                    .append(GameState.getTrialNumber()).append(", ")
+                    .append(GameState.getBlockNumber()).append(", ")
+                    .append(path).append(", ")
+                    .append(direction);
+
         }
         // Write the data to the buffered output stream as bytes
         bos.write(sb.toString().getBytes());
@@ -538,7 +694,7 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         String header_event = "event_marker, start_item_name, start_item_center_x, start_item_center_y, start_item_width, start_item_height, " +
                 "end_item_name, end_item_center_x, end_item_center_y, end_item_width, end_item_height, trial_number, block_number, path_type, path_direction";
         String header_accel = "accel_x, accel_y, accel_z"; // landscape tablet, x is along short height, y is along long width, z is through the tablet.
-        String header_touch = "touch_ID, touch_image, touch_x, touch_y, touch_max_diameter, touch_min_diameter, touch_area, touch_pressure";
+        String header_touch = "touch_action, touch_ID, touch_image, touch_x, touch_y, touch_max_diameter, touch_min_diameter, touch_area, touch_pressure,  trial_number, block_number, path_type, path_direction";
 
         StringBuilder header_eventfile = new StringBuilder();
         header_eventfile.append(header_boottime).append("\n")
@@ -618,4 +774,15 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         return false;
     }
 
+    public static Bitmap flip(Bitmap src, int type) {
+        // create new matrix for transformation
+        Matrix matrix = new Matrix();
+        // if horizontal
+        if (type == FLIP_HORIZONTAL) {
+            // x = x * -1
+            matrix.preScale(-1.0f, 1.0f);
+        }
+        // return transformed image
+        return Bitmap.createBitmap(src, 0, 0, src.getWidth(), src.getHeight(), matrix, true);
+    }
 }
