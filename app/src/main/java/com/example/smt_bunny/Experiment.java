@@ -483,8 +483,8 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
                         .append((bunny.getY() + bunny.getHeight() / 2)).append(", ")
                         .append(bunny.getWidth()).append(", ")
                         .append(bunny.getHeight()).append(", ")
-                        .append(GameState.getTrialNumber()).append(", ")
                         .append(GameState.getBlockNumber()).append(", ")
+                        .append(GameState.getTrialNumber()).append(", ")
                         .append(path).append(", ")
                         .append(direction);
 
@@ -609,11 +609,11 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
                         .append(ev.getHistoricalTouchMajor(p,h)).append(", ")
                         .append(ev.getHistoricalTouchMinor(p,h)).append(", ")
                         .append(ev.getHistoricalTouchMajor(p,h)/2 * ev.getHistoricalTouchMinor(p,h)/2 * Math.PI).append(", ")
-                        .append(ev.getHistoricalPressure(p,h)).append("\n")
-                        .append(GameState.getTrialNumber()).append(", ")
+                        .append(ev.getHistoricalPressure(p,h)).append(",")
                         .append(GameState.getBlockNumber()).append(", ")
+                        .append(GameState.getTrialNumber()).append(", ")
                         .append(path).append(", ")
-                        .append(direction);
+                        .append(direction).append("\n");
 
             }
         }
@@ -630,11 +630,11 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
                     .append(ev.getTouchMajor(p)).append(", ")
                     .append(ev.getTouchMinor(p)).append(", ")
                     .append(ev.getTouchMajor(p)/2 * ev.getTouchMinor(p)/2 * Math.PI).append(", ")
-                    .append(ev.getPressure(p)).append("\n")
-                    .append(GameState.getTrialNumber()).append(", ")
+                    .append(ev.getPressure(p)).append(", ")
                     .append(GameState.getBlockNumber()).append(", ")
+                    .append(GameState.getTrialNumber()).append(", ")
                     .append(path).append(", ")
-                    .append(direction);
+                    .append(direction).append("\n");
 
         }
         // Write the data to the buffered output stream as bytes
@@ -692,9 +692,9 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
 //        String header_boottime = "BOOT_TIME_EPOCH " + time + "\nBOOT_UPTIME_MILLIS " + uptimeMillis();
         String header_time = "time";
         String header_event = "event_marker, start_item_name, start_item_center_x, start_item_center_y, start_item_width, start_item_height, " +
-                "end_item_name, end_item_center_x, end_item_center_y, end_item_width, end_item_height, trial_number, block_number, path_type, path_direction";
+                "end_item_name, end_item_center_x, end_item_center_y, end_item_width, end_item_height, block_number, trial_number, path_type, path_direction";
         String header_accel = "accel_x, accel_y, accel_z"; // landscape tablet, x is along short height, y is along long width, z is through the tablet.
-        String header_touch = "touch_action, touch_ID, touch_image, touch_x, touch_y, touch_max_diameter, touch_min_diameter, touch_area, touch_pressure,  trial_number, block_number, path_type, path_direction";
+        String header_touch = "touch_action, touch_ID, touch_image, touch_x, touch_y, touch_max_diameter, touch_min_diameter, touch_area, touch_pressure,  block_number, trial_number, path_type, path_direction";
 
         StringBuilder header_eventfile = new StringBuilder();
         header_eventfile.append(header_boottime).append("\n")
