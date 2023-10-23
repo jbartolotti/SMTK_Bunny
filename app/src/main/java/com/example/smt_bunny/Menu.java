@@ -70,6 +70,12 @@ public class Menu extends AppCompatActivity {
         radioPathStraight = findViewById(R.id.radio_path_straight);
         radioPathCurved = findViewById(R.id.radio_path_curved);
 
+        Intent intent = getIntent();
+        participantID = intent.getStringExtra("participantID");
+        practiceComplete = intent.getBooleanExtra("practiceComplete", false);
+        idComplete = intent.getBooleanExtra("idComplete", false);
+
+
         setButtonVisibility();
 
         // Set up listeners for buttons
@@ -88,10 +94,10 @@ public class Menu extends AppCompatActivity {
         practiceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                practiceComplete = true;
-                setButtonVisibility();
+                // practiceComplete = true;
+                // setButtonVisibility();
                 // Start the practice activity
-                //startPracticeActivity();
+                startPracticeActivity();
             }
         });
 
@@ -162,7 +168,10 @@ public class Menu extends AppCompatActivity {
         int pvis = View.INVISIBLE;
         int evis = View.INVISIBLE;
         if(idComplete){pvis = View.VISIBLE;}
-        if(practiceComplete){evis = View.VISIBLE;}
+        if(practiceComplete){
+            evis = View.VISIBLE;
+            inputID.setText(participantID);
+        }
 
         //if ID has been entered, enable the practice
         practiceButton.setVisibility(pvis);
@@ -178,6 +187,7 @@ public class Menu extends AppCompatActivity {
 
     private void startPracticeActivity() {
         Intent intent = new Intent(this, Practice.class);
+        intent.putExtra("participantID", participantID);
         startActivity(intent);
     }
 

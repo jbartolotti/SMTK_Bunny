@@ -180,6 +180,13 @@
         android:orientation="horizontal">
 
         <ImageView
+            android:id="@+id/instructions_mhc"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            app:srcCompat="@drawable/bunny_instructions_mhc_sample" />
+
+        <ImageView
             android:id="@+id/bunnyCheer1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"

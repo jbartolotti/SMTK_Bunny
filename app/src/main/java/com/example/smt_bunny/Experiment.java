@@ -116,6 +116,7 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
     private ImageView guide_curve_toleft;
     private ImageView guide_straight_toright;
     private ImageView guide_straight_toleft;
+    private ImageView instructions_mhc;
 
     private ImageView guide;
 
@@ -147,6 +148,8 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         beginButton = findViewById(R.id.beginButton);
         nextBlockButton = findViewById(R.id.nextBlockButton);
         quitButton = findViewById(R.id.quitButton);
+        instructions_mhc = findViewById(R.id.instructions_mhc);
+
         guide = guide_curve_toright;
 
  //   bunnyCheer  = findViewById(R.id.bunnyCheerSingle);
@@ -520,6 +523,7 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         guide_straight_toleft.setVisibility(View.INVISIBLE);
         guide_curve_toright.setVisibility(View.INVISIBLE);
         guide_curve_toleft.setVisibility(View.INVISIBLE);
+        instructions_mhc.setVisibility(View.INVISIBLE);
 
         guide.setVisibility(vis);
         beginButton.setVisibility(vis);
@@ -539,7 +543,9 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
             case "curved":
                 switch (GameState.getCurrentDirection()) {
                     case "leftright":
-                        guide = guide_curve_toright;
+                        //guide = guide_curve_toright;
+                        guide = instructions_mhc;
+
                         break;
                     case "rightleft":
                         guide = guide_curve_toleft;
