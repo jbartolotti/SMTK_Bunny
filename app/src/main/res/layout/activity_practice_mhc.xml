@@ -23,7 +23,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/Slide4" />
+        app:srcCompat="@drawable/slide_4" />
 
     <ImageView
         android:id="@+id/imageView3"
@@ -33,7 +33,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/Slide5" />
+        app:srcCompat="@drawable/slide_5" />
 
     <ImageView
         android:id="@+id/imageView4"
@@ -43,7 +43,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/Slide6" />
+        app:srcCompat="@drawable/slide_6" />
 
     <ImageView
         android:id="@+id/imageView5"
