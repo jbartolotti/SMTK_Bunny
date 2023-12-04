@@ -1,5 +1,7 @@
 package com.example.smt_bunny;
 
+import static android.os.SystemClock.uptimeMillis;
+import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 
 import androidx.annotation.RequiresApi;
@@ -10,6 +12,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -18,11 +21,25 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 public class Practice extends AppCompatActivity implements View.OnTouchListener {
 
     private String participantID;
 
     ConstraintLayout myLayout;
+
+    private File File_Practice_Event;
+    private File File_Practice_Touch;
+    private BufferedOutputStream bos;
+    private boolean can_record;
 
     private ImageView TitleLearnWhich;
     private ImageView TitleChooseWhich;
@@ -52,8 +69,12 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
     private ImageView carrot_default3;
     private ImageView carrot3;
     private ImageView target_circle1;
+    private ImageView target_circle1_white;
     private ImageView target_circle2;
+    private ImageView target_circle2_white;
     private ImageView target_circle3;
+    private ImageView target_circle3_white;
+    private ImageView whiteCirc;
 
     private ImageView path_diagonal_1600;
     private ImageView blank_object;
@@ -64,6 +85,7 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
     private String practiceState;
     private Integer practiceTrial;
     private float holdTime = 0;
+    private float touch_start_time = 0;
 
     private Integer bunny_align_top = 10;
     private Integer bunny_align_bottom = 10;
@@ -110,8 +132,11 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
         carrot_default2 = findViewById(R.id.carrot_default2);
         carrot_default3 = findViewById(R.id.carrot_default3);
         target_circle1 = findViewById(R.id.target_circle1);
+        target_circle1_white = findViewById(R.id.target_circle1_white);
         target_circle2 = findViewById(R.id.target_circle2);
         target_circle3 = findViewById(R.id.target_circle3);
+        target_circle2_white = findViewById(R.id.target_circle2_white);
+        target_circle3_white = findViewById(R.id.target_circle3_white);
 
         bunny = bunny_brown;
         carrot = carrot_default;
@@ -163,6 +188,9 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
                 returnMenuActivity();
             }
         });
+
+
+
 
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -238,6 +266,15 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
             }
         });
 
+        can_record = initializeSaveFile(participantID);
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(File_Practice_Touch, true);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        // Create a buffered output stream with a buffer size of 1024 bytes
+        bos = new BufferedOutputStream(fos, 1024);
     }
 
     private void returnMenuActivity() {
@@ -251,14 +288,17 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     public boolean onTouch (View v, MotionEvent event){
+        String printState = practiceState;
+        int printTrial = practiceTrial;
         switch (practiceState){
             case "pressCarrot" :
 
                 if (v == activeObj){
+                    String actionName = null;
                     int action = event.getActionMasked();
 //                    int pointerIndex = event.getActionIndex();
 //                    int pointerID = event.getPointerId(pointerIndex);
-                    Log.d ("pressCarrot", "holdTime "+ (SystemClock.uptimeMillis() - holdTime));
+                    Log.d ("pressCarrot", "holdTime "+ (uptimeMillis() - holdTime));
 
                     switch (action){
                         // At beginning of touch, record the system time to holdTime.
@@ -267,12 +307,15 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
                         // Whenever a touch ends, reset the hold timer so that it can get initiated
                         // on the next press.
                         case MotionEvent.ACTION_DOWN:
+                            actionName = "TOUCH_START";
                             if (holdTime == 0) {
-                                holdTime = SystemClock.uptimeMillis();
+                                holdTime = uptimeMillis();
+                                touch_start_time = uptimeMillis();
                             }
                             break;
                         case MotionEvent.ACTION_UP:
-                            if (SystemClock.uptimeMillis() - holdTime > 1000){
+                            actionName = "TOUCH_END";
+                            if (uptimeMillis() - holdTime > 1000){
                                 practiceTrial = practiceTrial + 1;
                                 if(practiceTrial == 4) {
                                     practiceState = "dragCarrotAcc";
@@ -284,7 +327,20 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
                             holdTime = 0;
 
                             break;
+                        default:
+                            if(uptimeMillis() - holdTime > 1000){
+                                whiteCirc.setVisibility(View.VISIBLE);
+                            }
+                            actionName = "TOUCH_HOLD";
+                            break;
 
+                    }
+//                    StringBuilder ddat = new StringBuilder();
+//                    ddat.append(uptimeMillis()).append("-").append(holdDur).append("-").append(holdTime);
+                    try {
+                        saveSamples(event, "carrot", actionName, "none", "none", printState, printTrial);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                     return true; // the touch event was consumed
                 }
@@ -292,14 +348,23 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
             case "dragCarrotAcc":
             case "dragCarrotSpeed":
                 if (v == carrot){
+                    String actionName = null;
+                    String thisdir = "";
+                    if(practiceTrial == 1){
+                        thisdir = "leftright";
+                    } else{
+                        thisdir = "rightleft";
+                    }
                     int action = event.getActionMasked();
                     switch (action) { //get the action of the touch event
                         case MotionEvent.ACTION_DOWN: //the user first touches the view
+                            actionName = "TOUCH_START";
                             carrotOffsetX = event.getRawX() - carrot.getX();
                             carrotOffsetY = event.getRawY() - carrot.getY();
                             carrotMove = carrotOffsetX >= 0 & carrotOffsetX <= carrot.getWidth() & carrotOffsetY >= 0 & carrotOffsetY <= carrot.getHeight();
                             break;
                         case MotionEvent.ACTION_MOVE: //the user moves their finger on the view
+                            actionName = "TOUCH_MOVE";
                             if (carrotMove) {
                                 carrot.setX(event.getRawX() - carrotOffsetX);
                                 carrot.setY(event.getRawY() - carrotOffsetY);
@@ -307,6 +372,7 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
                             carrot.invalidate();
                             break;
                         case MotionEvent.ACTION_UP: //the user lifts their finger from the view
+                            actionName = "TOUCH_END";
                             //snap carrot's position if it's offscreen
                             if (carrot.getX() < 0) {
                                 carrot.setX(0); //Carrot is too far left, bring back
@@ -350,6 +416,11 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
                             break;
 
                     }
+                    try {
+                        saveSamples(event, "carrot", actionName, "diagonal", thisdir, printState, printTrial);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                     return true; // the touch event was consumed
                 }
                 return false; // the touch was not consumed and is still live
@@ -368,6 +439,8 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
         String targetText = null;
         ImageView targetObj = null;
         ImageView prevObj = null;
+        ImageView prevObjWhite = null;
+        boolean write_event = FALSE;
 
         switch (practiceState){
             case "learnWhich":
@@ -375,14 +448,17 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
                     case 1:
                         targetObj = target_circle1;
                         targetText = "This is the \nTarget Circle";
+                        write_event = TRUE;
                         break;
                     case 2:
                         targetObj = carrot2;
                         targetText = "This is the \nCarrot";
+                        write_event = TRUE;
                         break;
                     case 3:
                         targetObj = bunny3;
                         targetText = "This is the \nBunny";
+                        write_event = TRUE;
                         break;
                     default:
                         targetObj = target_circle1;
@@ -398,12 +474,15 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
                 switch (practiceTrial) {
                     case 1:
                         targetText = "Which is the Target Circle?";
+                        write_event = TRUE;
                         break;
                     case 2:
                         targetText = "Which is the Carrot?";
+                        write_event = TRUE;
                         break;
                     case 3:
                         targetText = "Which is the Bunny?";
+                        write_event = TRUE;
                         break;
                     default:
                         targetText = "";
@@ -419,27 +498,41 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
                 switch (practiceTrial) {
                     case 1:
                         prevObj = target_circle3;
+                        prevObjWhite = target_circle3_white;
                         targetObj = target_circle1;
                         activeObj = carrot1;
+                        whiteCirc = target_circle1_white;
+                        write_event = TRUE;
                         break;
                     case 2:
                         targetObj = target_circle2;
                         prevObj = target_circle1;
+                        prevObjWhite = target_circle1_white;
                         activeObj = carrot2;
+                        whiteCirc = target_circle2_white;
+                        write_event = TRUE;
                         break;
                     case 3:
                         targetObj = target_circle3;
                         prevObj = target_circle2;
+                        prevObjWhite = target_circle2_white;
                         activeObj = carrot3;
+                        whiteCirc = target_circle3_white;
+                        write_event = TRUE;
                         break;
                     default:
                         targetObj = null;
                         prevObj = target_circle3;
+                        prevObjWhite = target_circle3_white;
+                        whiteCirc = target_circle3_white;
+                        write_event = TRUE;
                         break;
                 }
                 targetObj.setVisibility(View.VISIBLE);
                 if(prevObj != null) {
                     prevObj.setVisibility(View.INVISIBLE);
+                    prevObjWhite.setVisibility(View.INVISIBLE);
+
                 }
                 Log.d("pressCarrot", "pressed at " + activeObj.getX());
                 break;
@@ -460,6 +553,7 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
                     //bunny: align end to end, and top to top
                     bunny.setX(path_diagonal_1600.getX()+path_diagonal_1600.getWidth() - bunny.getWidth() + bunny_align_right);
                     bunny.setY(path_diagonal_1600.getY()+bunny_align_top);
+                    write_event = TRUE;
                     break;
                 case 2:
 
@@ -470,13 +564,21 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
                     //bunny: align start to start, and bottom to bottom
                     bunny.setX(path_diagonal_1600.getX()+bunny_align_left);
                     bunny.setY(path_diagonal_1600.getY()+path_diagonal_1600.getHeight() - bunny.getHeight() + bunny_align_bottom);
-
+                    write_event = TRUE;
                     break;
                 default:
                     break;
 
             }
 
+        }
+        if(write_event) {
+            // Time, Sub, State, Trial
+            StringBuilder dat = new StringBuilder();
+            dat.append(participantID).append(", ")
+                    .append(practiceState).append(", ")
+                    .append(practiceTrial);
+            WriteDatToFile(File_Practice_Event, dat.toString());
         }
 
     }
@@ -547,13 +649,187 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
         carrot2.setVisibility(vis);
         carrot3.setVisibility(vis);
         target_circle1.setVisibility(vis);
+        target_circle1_white.setVisibility(vis);
         target_circle2.setVisibility(vis);
+        target_circle2_white.setVisibility(vis);
         target_circle3.setVisibility(vis);
+        target_circle3_white.setVisibility(vis);
 
         path_diagonal_1600.setVisibility(vis);
         blank_object.setVisibility(vis);
     }
 
+
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    void saveSamples(MotionEvent ev, String imagetype, String actionName, String path, String direction, String printState, int printTrial) throws IOException {
+
+        final int historySize = ev.getHistorySize();
+        final int pointerCount = ev.getPointerCount();
+        StringBuilder sb = new StringBuilder();
+        float offsetX = ev.getRawX() - ev.getX(); //historical x/y are only relative to the view, not rawx/y. So calc offsets and apply to the getHistoricalX/Y
+        float offsetY = ev.getRawY() - ev.getY();
+        for (int h = 0; h < historySize; h++) {
+            long htime = ev.getHistoricalEventTime(h);
+            for (int p = 0; p < pointerCount; p++) {
+                int pointerID = ev.getPointerId(p);
+                int pointerLabel = 0; //pointerLabels.get(pointerID);
+                sb.append(htime).append(", ")
+                        .append(actionName).append(", ")
+                        .append(pointerLabel).append(", ")
+                        .append(imagetype).append(", ")
+                        .append(ev.getHistoricalX(p,h)+offsetX).append(", ")
+                        .append(ev.getHistoricalY(p,h)+offsetY).append(", ")
+                        .append(ev.getHistoricalTouchMajor(p,h)).append(", ")
+                        .append(ev.getHistoricalTouchMinor(p,h)).append(", ")
+                        .append(ev.getHistoricalTouchMajor(p,h)/2 * ev.getHistoricalTouchMinor(p,h)/2 * Math.PI).append(", ")
+                        .append(ev.getHistoricalPressure(p,h)).append(",")
+                        .append(printState).append(", ")
+                        .append(printTrial).append(", ")
+                        .append(path).append(", ")
+                        .append(direction).append("\n");
+
+            }
+        }
+        long evtime = ev.getEventTime();
+        for (int p = 0; p < pointerCount; p++) {
+            int pointerID = ev.getPointerId(p);
+            int pointerLabel = 0; //pointerLabels.get(pointerID);
+            sb.append(evtime).append(", ")
+                    .append(actionName).append(", ")
+                    .append(pointerLabel).append(", ")
+                    .append(imagetype).append(", ")
+                    .append(ev.getRawX(p)).append(", ")
+                    .append(ev.getRawY(p)).append(", ")
+                    .append(ev.getTouchMajor(p)).append(", ")
+                    .append(ev.getTouchMinor(p)).append(", ")
+                    .append(ev.getTouchMajor(p)/2 * ev.getTouchMinor(p)/2 * Math.PI).append(", ")
+                    .append(ev.getPressure(p)).append(", ")
+                    .append(printState).append(", ")
+                    .append(printTrial).append(", ")
+                    .append(path).append(", ")
+                    .append(direction).append("\n");
+
+        }
+        // Write the data to the buffered output stream as bytes
+        bos.write(sb.toString().getBytes());
+        // Flush the buffered output stream to ensure that all data is written to the file output stream
+        bos.flush();
+    }
+
+    private void WriteDatToFile(File WriteFile, String data) {
+        WriteToFile(WriteFile, uptimeMillis() + ", " + data + "\n");
+    }
+    private void WriteToFile(File WriteFile, String data) {
+        if (can_record) {
+            try {
+                FileOutputStream fos = new FileOutputStream(WriteFile, true);
+                fos.write(data.getBytes());
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private boolean initializeSaveFile(String participantID) {
+        //Data storage
+        //https://www.journaldev.com/9400/android-external-storage-read-write-save-file
+        //saves to sdcard/Android/data/com.example.smt_bunny/files/FILEPATH/FILENAME, viewable on explorer or in android studio in Device File Explorer.
+        String filepath = "MyFileStorage";
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+        String currentDateandTime = sdf.format(new Date());
+
+        //e.g., participantID = 9999;
+        StringBuilder filename_event = new StringBuilder();
+        StringBuilder filename_accel = new StringBuilder();
+        StringBuilder filename_touch = new StringBuilder();
+        filename_event.append(currentDateandTime)
+                .append("_Practice_sub").append(participantID)
+                .append("_event.csv");
+        filename_accel.append(currentDateandTime)
+                .append("_Practice_sub").append(participantID)
+                .append("_accel.csv");
+        filename_touch.append(currentDateandTime)
+                .append("_Practice_sub").append(participantID)
+                .append("_touch.csv");
+
+//        String filename_event = currentDateandTime + "_sub" + participantID + "_event.csv";
+//        String filename_accel = currentDateandTime + "_sub" + participantID + "_accel.csv";
+//        String filename_touch = currentDateandTime + "_sub" + participantID + "_touch.csv";
+
+        long time = System.currentTimeMillis();
+        StringBuilder header_boottime = new StringBuilder();
+        header_boottime.append("BOOT_TIME_EPOCH").append(time)
+                .append("\nBOOT_UPTIME_MILLIS ").append(uptimeMillis());
+
+//        String header_boottime = "BOOT_TIME_EPOCH " + time + "\nBOOT_UPTIME_MILLIS " + uptimeMillis();
+        String header_time = "time";
+        String header_event = "participant_id, practice_block, practice_trial";
+        String header_touch = "touch_action, touch_ID, touch_image, touch_x, touch_y, touch_max_diameter, touch_min_diameter, touch_area, touch_pressure,  block_number, trial_number, path_type, path_direction, hold_duration";
+
+        StringBuilder header_eventfile = new StringBuilder();
+        header_eventfile.append(header_boottime).append("\n")
+                .append(header_time).append(", ")
+                .append(header_event).append("\n");
+        StringBuilder header_touchfile = new StringBuilder();
+        header_touchfile.append(header_boottime).append("\n")
+                .append(header_time).append(", ")
+                .append(header_touch).append("\n");
+
+//        String header_eventfile = header_boottime + "\n" + header_time + ", " + header_event + "\n";
+//        String header_touchfile = header_boottime + "\n" + header_time + ", " + header_touch + "\n";
+
+        boolean goodsave = TRUE;
+
+        if(!isExternalStorageAvailable() || isExternalStorageReadOnly())
+        {
+            //            startBtn.setEnabled(false);
+            //            startBtn.setText("NO SAVE FILE");
+            goodsave = FALSE;
+        }
+        else
+
+        {
+            File_Practice_Event = new File(getExternalFilesDir(filepath), filename_event.toString());
+            try {
+                FileOutputStream fos = new FileOutputStream(File_Practice_Event, false);
+                fos.write(header_eventfile.toString().getBytes());
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                goodsave = FALSE;
+            }
+
+
+            File_Practice_Touch = new File(getExternalFilesDir(filepath), filename_touch.toString());
+            try {
+                FileOutputStream fos = new FileOutputStream(File_Practice_Touch, false);
+                fos.write(header_touchfile.toString().getBytes());
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                goodsave = FALSE;
+            }
+
+            //            startBtn.setText("SAVE");//
+        }
+        return goodsave;
+    }
+    private boolean isExternalStorageReadOnly() {
+        String extStorageState = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(extStorageState)) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isExternalStorageAvailable() {
+        String extStorageState = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(extStorageState)) {
+            return true;
+        }
+        return false;
+    }
 
 
 }

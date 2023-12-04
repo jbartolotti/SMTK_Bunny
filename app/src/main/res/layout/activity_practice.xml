@@ -167,6 +167,15 @@
         android:layout_marginTop="200dp"
         />
     <ImageView
+        android:id="@+id/target_circle1_white"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        app:srcCompat="@drawable/touch_circle_300sq_white"
+        app:layout_constraintStart_toStartOf="@id/target_circle1"
+        app:layout_constraintTop_toTopOf="@id/target_circle1"
+        />
+
+    <ImageView
         android:id="@+id/target_circle2"
         android:layout_width="300dp"
         android:layout_height="300dp"
@@ -177,6 +186,14 @@
         app:layout_constraintTop_toTopOf="@id/target_circle1"
         />
     <ImageView
+        android:id="@+id/target_circle2_white"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        app:srcCompat="@drawable/touch_circle_300sq_white"
+        app:layout_constraintStart_toStartOf="@id/target_circle2"
+        app:layout_constraintTop_toTopOf="@id/target_circle2"
+        />
+    <ImageView
         android:id="@+id/target_circle3"
         android:layout_width="300dp"
         android:layout_height="300dp"
@@ -185,6 +202,14 @@
         android:layout_marginStart="300dp"
         android:layout_marginLeft="300dp"
         app:layout_constraintTop_toTopOf="@id/target_circle1"
+        />
+    <ImageView
+        android:id="@+id/target_circle3_white"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        app:srcCompat="@drawable/touch_circle_300sq_white"
+        app:layout_constraintStart_toStartOf="@id/target_circle3"
+        app:layout_constraintTop_toTopOf="@id/target_circle3"
         />
 
     <ImageView
