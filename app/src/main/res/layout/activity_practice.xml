@@ -87,6 +87,8 @@
         android:text="QUIT"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="20px"
+        android:layout_marginBottom="20px"
         />
     <Button
         android:id="@+id/next_button"
@@ -95,6 +97,8 @@
         android:text="Next"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="20px"
+        android:layout_marginEnd = "20px"
 
         />
     <Button
@@ -118,6 +122,17 @@
         android:layout_marginBottom="200dp"
         />
 
+
+    <ImageView
+        android:id="@+id/bunny_brown"
+        android:layout_width="300px"
+        android:layout_height="300px"
+        app:srcCompat="@drawable/bunny_brown"
+        app:layout_constraintEnd_toEndOf="@id/path_diagonal_1600"
+        app:layout_constraintTop_toTopOf="@id/path_diagonal_1600"
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="10dp"
+        />
 
 
     <ImageView
@@ -210,17 +225,6 @@
         app:srcCompat="@drawable/touch_circle_300sq_white"
         app:layout_constraintStart_toStartOf="@id/target_circle3"
         app:layout_constraintTop_toTopOf="@id/target_circle3"
-        />
-
-    <ImageView
-        android:id="@+id/bunny_brown"
-        android:layout_width="300px"
-        android:layout_height="300px"
-        app:srcCompat="@drawable/bunny_brown"
-        app:layout_constraintEnd_toEndOf="@id/path_diagonal_1600"
-        app:layout_constraintTop_toTopOf="@id/path_diagonal_1600"
-        android:layout_marginEnd="20dp"
-        android:layout_marginTop="10dp"
         />
 
     <ImageView

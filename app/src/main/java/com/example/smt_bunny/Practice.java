@@ -33,6 +33,8 @@ import java.util.Locale;
 public class Practice extends AppCompatActivity implements View.OnTouchListener {
 
     private String participantID;
+    private String participantRun;
+    private String participantTimepoint;
 
     ConstraintLayout myLayout;
 
@@ -80,7 +82,8 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
     private ImageView blank_object;
     private float carrotOffsetX;
     private float carrotOffsetY;
-    private boolean carrotMove = false;
+    private boolean carrotMove = FALSE;
+    private boolean enableDrag = FALSE;
 
     private String practiceState;
     private Integer practiceTrial;
@@ -169,7 +172,8 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
         // Get the participant ID from the intent that started this activity
         Intent intent = getIntent();
         participantID = intent.getStringExtra("participantID");
-
+        participantRun = intent.getStringExtra("participantRun");
+        participantTimepoint = intent.getStringExtra("participantTimepoint");
 
         // the three carrots that get pressed in the "Press Carrot" task
         carrot1.setOnTouchListener(this);
@@ -213,6 +217,7 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
                     case "dragCarrotAcc":
                     case "dragCarrotSpeed":
                         practiceTrial = 1;
+                        enableDrag = TRUE;
                         startButton.setVisibility(View.INVISIBLE);
                         setObjectLayout();
                         break;
@@ -280,6 +285,8 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
     private void returnMenuActivity() {
         Intent intent = new Intent(this, Menu.class);
         intent.putExtra("participantID", participantID);
+        intent.putExtra("participantRun",participantRun);
+        intent.putExtra("participantTimepoint",participantTimepoint);
         intent.putExtra("practiceComplete", true);
         intent.putExtra("idComplete",true);
         startActivity(intent);
@@ -293,7 +300,7 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
         switch (practiceState){
             case "pressCarrot" :
 
-                if (v == activeObj){
+                if (v == activeObj ){
                     String actionName = null;
                     int action = event.getActionMasked();
 //                    int pointerIndex = event.getActionIndex();
@@ -321,6 +328,7 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
                                     practiceState = "dragCarrotAcc";
                                     practiceTrial = 0;
                                     setObjectVisibility();
+                                    enableDrag = FALSE;
                                 }
                                 setObjectLayout();
                             }
@@ -347,7 +355,7 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
                 return false; // the touch was not consumed and is still live
             case "dragCarrotAcc":
             case "dragCarrotSpeed":
-                if (v == carrot){
+                if (v == carrot && enableDrag){
                     String actionName = null;
                     String thisdir = "";
                     if(practiceTrial == 1){
@@ -400,11 +408,14 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
                                             practiceTrial = 0;
                                             practiceState = "dragCarrotSpeed";
                                             setObjectVisibility();
+                                            setObjectLayout();
+                                            enableDrag = FALSE;
                                             break;
                                         case "dragCarrotSpeed":
                                             practiceTrial = 0;
                                             practiceState = "end";
                                             setObjectVisibility();
+                                            setObjectLayout();
                                             break;
 
                                     }
@@ -472,11 +483,11 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
                 break;
             case "chooseWhich":
                 switch (practiceTrial) {
-                    case 1:
+                    case 2:
                         targetText = "Which is the Target Circle?";
                         write_event = TRUE;
                         break;
-                    case 2:
+                    case 1:
                         targetText = "Which is the Carrot?";
                         write_event = TRUE;
                         break;
@@ -542,6 +553,7 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
             case "dragCarrotSpeed":
 
                 switch (practiceTrial) {
+                case 0:
                 case 1:
                     carrot.setVisibility(View.VISIBLE);
                     bunny.setVisibility(View.VISIBLE);
@@ -614,10 +626,16 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
             case "dragCarrotAcc":
                 TitleCarrotAccuracy.setVisibility(vis);
                 startButton.setVisibility(vis);
+                bunny.setVisibility(vis);
+                carrot.setVisibility(vis);
+                path_diagonal_1600.setVisibility(vis);
                 break;
             case "dragCarrotSpeed":
                 TitleCarrotSpeed.setVisibility(vis);
                 startButton.setVisibility(vis);
+                bunny.setVisibility(vis);
+                carrot.setVisibility(vis);
+                path_diagonal_1600.setVisibility(vis);
                 break;
             case "end":
                 finishedButton.setVisibility(vis);
@@ -745,12 +763,16 @@ public class Practice extends AppCompatActivity implements View.OnTouchListener 
         StringBuilder filename_touch = new StringBuilder();
         filename_event.append(currentDateandTime)
                 .append("_Practice_sub").append(participantID)
+                .append("_").append(participantTimepoint)
+                .append("x").append(participantRun)
                 .append("_event.csv");
-        filename_accel.append(currentDateandTime)
-                .append("_Practice_sub").append(participantID)
-                .append("_accel.csv");
+//        filename_accel.append(currentDateandTime)
+//                .append("_Practice_sub").append(participantID)
+//                .append("_accel.csv");
         filename_touch.append(currentDateandTime)
                 .append("_Practice_sub").append(participantID)
+                .append("_").append(participantTimepoint)
+                .append("x").append(participantRun)
                 .append("_touch.csv");
 
 //        String filename_event = currentDateandTime + "_sub" + participantID + "_event.csv";

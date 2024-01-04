@@ -60,6 +60,8 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
     private DataCollectorService dataCollectorService;
     private boolean can_record;
     private String participantID;
+    private String participantRun;
+    private String participantTimepoint;
     private String startingCondition;
     private String straightStartingDirection;
     private String curvedStartingDirection;
@@ -126,6 +128,7 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
     private int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
     private int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
 
+    private int startingBlockNumber = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -197,6 +200,8 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
             @SuppressLint("ClickableViewAccessibility")
             @Override
             public boolean onTouch (View v, MotionEvent event) {
+                int printBlock = GameState.getActualBlockNumber();
+                int printTrial = GameState.getTrialNumber();
                 int action = event.getActionMasked (); //get the masked action of the touch event
                 int pointerIndex = event.getActionIndex (); //get the index of the pointer associated with the action
                 int pointerId = event.getPointerId (pointerIndex); //get the ID of the pointer associated with the action
@@ -236,7 +241,7 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
                         break;
                 }
                 try {
-                    saveSamples(event, "background", actionName);
+                    saveSamples(event, "background", actionName, printBlock, printTrial);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -255,7 +260,8 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         quitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-            finishAffinity();
+                returnMenuActivity();
+               // finishAffinity();
             }
         });
 
@@ -284,9 +290,12 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         // Get the participant ID and the experimental condition from the intent that started this activity
         Intent intent = getIntent();
         participantID = intent.getStringExtra("participantID");
+        participantRun = intent.getStringExtra("participantRun");
+        participantTimepoint = intent.getStringExtra("participantTimepoint");
         startingCondition = intent.getStringExtra("startingPath");
         straightStartingDirection = intent.getStringExtra("straightDir1");
         curvedStartingDirection = intent.getStringExtra("curvedDir1");
+        startingBlockNumber = intent.getIntExtra("startingBlockNumber", 1);
 
         //Create the savedata files
         can_record = initializeSaveFile(participantID);
@@ -307,7 +316,7 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         service.putExtra("can_record", can_record);
         startService(service);
 
-        GameState.initialize(startingCondition, straightStartingDirection, curvedStartingDirection);
+        GameState.initialize(startingCondition, straightStartingDirection, curvedStartingDirection, startingBlockNumber);
         viewGame("hide");
         viewGuide("show");
         viewInterblock("hide");
@@ -318,6 +327,8 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     public boolean onTouch (View v, MotionEvent event) {
+        int printBlock = GameState.getActualBlockNumber();
+        int printTrial = GameState.getTrialNumber();
         if (v == carrot) { //check if the view that was touched is the imageview of a carrot
             int action = event.getActionMasked();
             int pointerIndex = event.getActionIndex();
@@ -383,7 +394,7 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
                     break;
             }
             try {
-                saveSamples(event, "carrot", actionName);
+                saveSamples(event, "carrot", actionName, printBlock, printTrial);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -399,7 +410,16 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
     public void onBackPressed() {
         // do nothing
     }
-
+    private void returnMenuActivity() {
+        Intent intent = new Intent(this, Menu.class);
+        intent.putExtra("participantID", participantID);
+        intent.putExtra("participantRun",participantRun);
+        intent.putExtra("participantTimepoint",participantTimepoint);
+        intent.putExtra("practiceComplete", true);
+        intent.putExtra("idComplete",true);
+        intent.putExtra("currentBlockNumber", GameState.getActualBlockNumber());
+        startActivity(intent);
+    }
 
     private void nextTrial() {
         viewGame("hide");
@@ -412,8 +432,13 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
             //go to the inter-block screen
             //then start a new trial in this new block
             if (endGame) {
-                nextBlockButton.setVisibility(View.INVISIBLE);
+                // show the 'back to menu' button if we are at or past the final block.
+                // i.e., in the fourth block, or in any 'extra' blocks past the fourth.
                 quitButton.setVisibility(View.VISIBLE);
+            }
+            if (GameState.isLastBlockPlus1()) {
+                // show the 'next block' button if we are in any blocks before the last, i.e. 1-3 but not 4.
+                 nextBlockButton.setVisibility(View.INVISIBLE);
             }
         } else {
             path = GameState.getCurrentPathType();
@@ -486,7 +511,7 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
                         .append((bunny.getY() + bunny.getHeight() / 2)).append(", ")
                         .append(bunny.getWidth()).append(", ")
                         .append(bunny.getHeight()).append(", ")
-                        .append(GameState.getBlockNumber()).append(", ")
+                        .append(GameState.getActualBlockNumber()).append(", ")
                         .append(GameState.getTrialNumber()).append(", ")
                         .append(path).append(", ")
                         .append(direction);
@@ -594,7 +619,7 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
     }
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
-    void saveSamples(MotionEvent ev, String imagetype, String actionName) throws IOException {
+    void saveSamples(MotionEvent ev, String imagetype, String actionName, int printBlock, int printTrial) throws IOException {
 
         final int historySize = ev.getHistorySize();
         final int pointerCount = ev.getPointerCount();
@@ -616,8 +641,8 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
                         .append(ev.getHistoricalTouchMinor(p,h)).append(", ")
                         .append(ev.getHistoricalTouchMajor(p,h)/2 * ev.getHistoricalTouchMinor(p,h)/2 * Math.PI).append(", ")
                         .append(ev.getHistoricalPressure(p,h)).append(",")
-                        .append(GameState.getBlockNumber()).append(", ")
-                        .append(GameState.getTrialNumber()).append(", ")
+                        .append(printBlock).append(", ")
+                        .append(printTrial).append(", ")
                         .append(path).append(", ")
                         .append(direction).append("\n");
 
@@ -637,8 +662,8 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
                     .append(ev.getTouchMinor(p)).append(", ")
                     .append(ev.getTouchMajor(p)/2 * ev.getTouchMinor(p)/2 * Math.PI).append(", ")
                     .append(ev.getPressure(p)).append(", ")
-                    .append(GameState.getBlockNumber()).append(", ")
-                    .append(GameState.getTrialNumber()).append(", ")
+                    .append(printBlock).append(", ")
+                    .append(printTrial).append(", ")
                     .append(path).append(", ")
                     .append(direction).append("\n");
 
@@ -678,12 +703,18 @@ public class Experiment extends AppCompatActivity implements View.OnTouchListene
         StringBuilder filename_touch = new StringBuilder();
         filename_event.append(currentDateandTime)
                 .append("_sub").append(participantID)
+                .append("_").append(participantTimepoint)
+                .append("x").append(participantRun)
                 .append("_event.csv");
         filename_accel.append(currentDateandTime)
                 .append("_sub").append(participantID)
+                .append("_").append(participantTimepoint)
+                .append("x").append(participantRun)
                 .append("_accel.csv");
         filename_touch.append(currentDateandTime)
                 .append("_sub").append(participantID)
+                .append("_").append(participantTimepoint)
+                .append("x").append(participantRun)
                 .append("_touch.csv");
 
 //        String filename_event = currentDateandTime + "_sub" + participantID + "_event.csv";

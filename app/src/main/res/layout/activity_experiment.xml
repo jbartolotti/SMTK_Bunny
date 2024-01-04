@@ -132,12 +132,12 @@
         android:id="@+id/quitButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="END AND CLOSE"
+        android:text="RETURN TO MENU"
         android:textSize="36dp"
-        android:layout_marginBottom="20px"
+        android:layout_marginBottom="40px"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginEnd="40px"/>
 
     <Button
         android:id="@+id/nextBlockButton"

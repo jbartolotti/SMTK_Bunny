@@ -25,6 +25,70 @@
         android:textSize="36dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+    <TextView
+        android:id="@+id/inputRun"
+        android:layout_width="330dp"
+        android:layout_height="64dp"
+        android:layout_marginTop="10dp"
+        android:layout_weight="1"
+        android:gravity = "center"
+        android:background="@android:color/white"
+        android:textColor="@android:color/black"
+        android:text="ENTER RUN"
+        android:textSize="36dp"
+        app:layout_constraintStart_toStartOf="@id/inputIDlabel"
+        app:layout_constraintTop_toBottomOf="@id/inputIDlabel" />
+    <TextView
+        android:id="@+id/inputTimepoint"
+        android:layout_width="330dp"
+        android:layout_height="64dp"
+        android:layout_marginTop="10dp"
+        android:layout_weight="1"
+        android:gravity = "center"
+        android:background="@android:color/white"
+        android:textColor="@android:color/black"
+        android:text="ENTER TIMEPOINT"
+        android:textSize="36dp"
+        app:layout_constraintStart_toStartOf="@id/inputIDlabel"
+        app:layout_constraintTop_toBottomOf="@id/inputRun" />
+
+    <EditText
+        android:id="@+id/editTextRun"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="00dp"
+        android:layout_marginLeft="556dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginEnd = "556dp"
+        android:ems="10"
+        android:inputType="phone"
+        android:digits="0123456789."
+        android:hint="1"
+        android:imeOptions="actionDone"
+        android:textColor="@android:color/black"
+        android:textSize="48dp"
+        android:background = "@android:color/white"
+        app:layout_constraintStart_toEndOf="@id/inputRun"
+        app:layout_constraintTop_toTopOf="@+id/inputRun" />
+    <EditText
+        android:id="@+id/editTextTimepoint"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="00dp"
+        android:layout_marginLeft="556dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginEnd = "556dp"
+        android:ems="10"
+        android:inputType="phone"
+        android:digits="0123456789."
+        android:hint="1"
+        android:imeOptions="actionDone"
+        android:textColor="@android:color/black"
+        android:textSize="48dp"
+        android:background = "@android:color/white"
+        app:layout_constraintStart_toEndOf="@id/inputTimepoint"
+        app:layout_constraintTop_toTopOf="@+id/inputTimepoint"
+        android:layout_marginRight="556dp" />
     <EditText
         android:id="@+id/editTextID"
         android:layout_width="160dp"
@@ -51,11 +115,11 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="64dp"
         android:layout_marginLeft="64dp"
-        android:layout_marginTop="468dp"
+        android:layout_marginTop="100dp"
         android:text="PRACTICE"
         android:textSize="36dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/inputTimepoint" />
 
     <Button
         android:id="@+id/experimentButton"

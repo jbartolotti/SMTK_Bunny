@@ -1,6 +1,10 @@
 package com.example.smt_bunny;
 // import static com.example.smt_bunny.MainActivity.startTrial;
 
+import static android.os.SystemClock.uptimeMillis;
+
+import android.util.Log;
+
 public class GameState {
     private static int trialNumber;
     private static int blockNumber;
@@ -14,15 +18,16 @@ public class GameState {
     private static String straightSecondDirection;
     private static String curvedStartingDirection;
     private static String curvedSecondDirection;
+    private static int startingBlockNumber;
 
     public static String getCurrentPathType(){
-        return getPathType(blockNumber);
+        return getPathType(getBlockNumber());
     }
     public static String getCurrentDirection(){
-        return getDirection(blockNumber);
+        return getDirection(getBlockNumber());
     }
-    public static String getPathType(int blocknumber){
-        switch(blockNumber){
+    public static String getPathType(int bn){
+        switch(bn){
             case 1:
             case 2:
                 return startingPath;
@@ -33,18 +38,18 @@ public class GameState {
                 return "path_unknown_block";
         }
     }
-    public static String getDirection(int blocknumber){
-        switch(blockNumber){
+    public static String getDirection(int bn){
+        switch(bn){
             case 1:
             case 3:
-                if(getPathType(blocknumber).equals("straight")){
+                if(getPathType(bn).equals("straight")){
                     return straightStartingDirection;
                 } else {
                     return curvedStartingDirection;
                 }
             case 2:
             case 4:
-                if(getPathType(blocknumber).equals("straight")){
+                if(getPathType(bn).equals("straight")){
                     return straightSecondDirection;
                 } else {
                     return curvedSecondDirection;
@@ -55,9 +60,10 @@ public class GameState {
     }
 
 
-    public static void initialize(String startingCondition, String straightDir1, String curvedDir1){
+    public static void initialize(String startingCondition, String straightDir1, String curvedDir1, int startBlock){
         trialNumber = 0;
-        blockNumber = 1;
+        blockNumber = startBlock;
+        startingBlockNumber = startBlock;
         if(startingCondition.equals("straight")){
             startingPath = "straight";
             secondPath = "curved";
@@ -88,6 +94,8 @@ public class GameState {
             blockNumber++;
             endOfBlock = true;
         }
+        Log.d ("gamestate", "block "+ blockNumber + ", trial "+trialNumber);
+
         return endOfBlock;
     }
 
@@ -99,8 +107,18 @@ public class GameState {
         return trialNumber;
     }
     public static int getBlockNumber() {
+        // allows for blocks > max to continue cycling 1 to 4. Useful for running 'extra' blocks,
+        // while endgame continues to be true for any blocks past the endpoint.
+        return(blockNumber - startingBlockNumber + 1);
+        //return ((blockNumber-1) % MAX_BLOCKS) + 1;
+    }
+    public static int getActualBlockNumber(){
         return blockNumber;
     }
+    public static boolean isLastBlockPlus1() {return getBlockNumber() == MAX_BLOCKS+1;}
 
 
+    public static void setStartingBlockNumber(int startingBlockNumber) {
+        GameState.startingBlockNumber = startingBlockNumber;
+    }
 }
